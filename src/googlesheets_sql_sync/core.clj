@@ -3,6 +3,7 @@
     [cheshire.core :as json]
     [clj-http.client :as http]
     [clojure.core.async :refer [<! <!! >!! alt! chan close! go go-loop timeout]]
+    [clojure.java.io :as io]
     [clojure.java.jdbc :as sql]
     [clojure.string :as string]
     [ring.adapter.jetty :refer [run-jetty]]
@@ -64,9 +65,15 @@
 
 (defn generate-config []
   (let [file (str (pwd) "/" (:config-file-path defaults))]
-    (println "generating" file)
-    (write-json (:config defaults) file)
-    (println "done")))
+    (if (.exists (io/as-file file))
+      (do
+        (println "stopping because fail already exists:" file)
+        false)
+      (do
+        (println "generating" file)
+        (write-json (:config defaults) file)
+        (println "done")
+        true))))
 
 (defn fetch-sheet [token id]
   (http/get (str sheets-url id "/values/" (:sheet-range defaults))
@@ -265,6 +272,6 @@
   [& args]
   (cond
     (= 1 (count args)) (run (first args))
-    (= 0 (count args)) (generate-config)
+    (= 0 (count args)) (if-not (generate-config) (System/exit 1))
     :else (do (println usage)
               (System/exit 1))))

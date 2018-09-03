@@ -14,7 +14,6 @@ If you sqlite or mysql support open an issue and support can be added in no time
 
 - sheet-title default to first sheet ?
 - optional path for init command
-- check for existing config file before init
 - better sql statements
 - rebust error handling
 - allow sheet + range specification
@@ -40,6 +39,7 @@ If you sqlite or mysql support open an issue and support can be added in no time
 - github release
 - support mysql
 - support sqlite
+- if localhost, use https://clojuredocs.org/clojure.java.browse
 
 
 
