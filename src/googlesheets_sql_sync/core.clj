@@ -1,11 +1,12 @@
 (ns googlesheets-sql-sync.core
-  (:require [clojure.string :as s]
-            [clojure.core.async :refer [chan go go-loop alt! timeout close! >!! <! <!!]]
-            [cheshire.core :as json]
-            [clj-http.client :as http]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.adapter.jetty :as ring-jetty]
-            [clojure.java.jdbc :as jdbc])
+  (:require
+    [cheshire.core :as json]
+    [clj-http.client :as http]
+    [clojure.core.async :refer [<! <!! >!! alt! chan close! go go-loop timeout]]
+    [clojure.java.jdbc :as sql]
+    [clojure.string :as string]
+    [ring.adapter.jetty :refer [run-jetty]]
+    [ring.middleware.params :refer [wrap-params]])
   (:gen-class))
 
 (def usage "
@@ -25,13 +26,13 @@
 ")
 
 (def defaults {:config-file-path "googlesheets_sql_sync.json"
-               :config {:sheets [{:table "your_sql_table_name"
+               :config {:sheets [{:table          "your_sql_table_name"
                                   :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
-                                  :target "TARGET NAME"}]
+                                  :target         "TARGET NAME"}]
                         :targets {"TARGET NAME" {}}
-                        :google_credentials {:client_id "COPY FROM GOOGLE CONSOLE"
+                        :google_credentials {:client_id     "COPY FROM GOOGLE CONSOLE"
                                              :client_secret "COPY FROM GOOGLE CONSOLE"
-                                             :redirect_uri "http://localhost:9955/oauth"}
+                                             :redirect_uri  "http://localhost:9955/oauth"}
                         :port 9955
                         :interval {:minutes 30}}
                :sheet-range "A:ZZ"})
@@ -42,9 +43,9 @@
 (def scope            "https://www.googleapis.com/auth/spreadsheets.readonly")
 (def oauth-route      "/oauth")
 
-(def default-user-params {:scope scope
-                          :access_type "offline"
-                          :response_type "code"})
+(def default-user-params {:scope          scope
+                          :access_type    "offline"
+                          :response_type  "code"})
 
 (def request-params-code    {:grant_type "authorization_code"})
 (def request-params-refresh {:grant_type "refresh_token"})
@@ -81,7 +82,7 @@
 (defn escape
   "Replace all c in text with \\c"
   [text c]
-  (s/replace text c (str "\\" c)))
+  (string/replace text c (str "\\" c)))
 
 (comment
   (escape "hey \"you\"!" "\""))
@@ -90,15 +91,15 @@
   (println table "- creating table")
   (let [columns (->> headers
                      (map #(str % " text"))
-                     (s/join ", "))
-        sql (str "create table " table " ( " columns " )")]
-    (jdbc/execute! db sql)))
+                     (string/join ", "))
+        s (str "create table " table " ( " columns " )")]
+    (sql/execute! db s)))
 
 (defn get-columns [db table]
   (println table "- fetching db columns for table")
   (println "TODO this only works with special permission. use easier way to get columns")
-  (let [sql (str "select column_name from information_schema.columns where table_name = '" (escape table "'") "';")]
-    (jdbc/query db sql)))
+  (let [s (str "select column_name from information_schema.columns where table_name = '" (escape table "'") "';")]
+    (sql/query db s)))
 
 (comment
   (let [config (read-json (:config-file-path defaults))
@@ -110,8 +111,8 @@
 (defn table-exists? [db table]
   (println "checking if table exists" table)
   (println "TODO this only works with special permission. use easier way to check this")
-  (let [sql (str "select 1 from information_schema.tables where table_name = '" (escape table "'") "';")]
-    (< 0 (count (jdbc/query db sql)))))
+  (let [s (str "select 1 from information_schema.tables where table_name = '" (escape table "'") "';")]
+    (< 0 (count (sql/query db s)))))
 
 (defn setup-table [config sheet]
   (let [db (get-in config [:targets (keyword (get-in sheet [:sheet :target]))])
@@ -127,9 +128,9 @@
       (println "TODO check columns for changes here...")
       (create db headers table))
     (println table "- clearing table")
-    (jdbc/execute! db (str "truncate table " table))
+    (sql/execute! db (str "truncate table " table))
     (println table "- writing " (count data) "rows to table")
-    (jdbc/insert-multi! db table headers data)
+    (sql/insert-multi! db table headers data)
     sheet))
 
 (defn interval-in-ms [config]
@@ -243,8 +244,8 @@
         code-chan (chan)
         handler (make-handler code-chan)
         app (-> handler wrap-params)
-        server (ring-jetty/run-jetty app {:port (:port config)
-                                          :join? false})
+        server (run-jetty app {:port (:port config
+                                          :join? false)})
         stop (chan)]
     (when-not (get-access-token config)
       (println "no access token found. initializing...")
