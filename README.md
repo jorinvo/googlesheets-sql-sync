@@ -12,37 +12,31 @@ If you sqlite or mysql support open an issue and support can be added in no time
 
 ## Roadmap
 
-- config init command for oauth
-  - client-id client-secret [path]
-  - use expires-in to refresh access token periodically
-- logging
+- sheet-title default to first sheet ?
+- optional path for init command
+- check for existing config file before init
+- better sql statements
+- rebust error handling
+- allow sheet + range specification
 - detect schema change
   - log to stderr
   - send slack alert (default is no overwrite)
   - add column works without conflict (can still slack notify)
 - spec for config
-- option to disable init
-- use transaction for db
-- optional pass path for json init
 - validate interval > 0
 - validate targets exist
-- check for existing config file before init
-- add optional has-header-row
-- sheet-title default to first sheet
-- allow range specification
-- allow sheet specification
-- guess column types (start with all text)
-- flexible targets
+- add optional has-header-row and add optional headers (which must be set when has-header-row = false)
+- refresh token in a smarter way
+- logging
 - prometheus metrics
   - duration
   - target and table as labels
   - column count
   - row count
 - find spreadsheet-title
-- support sheet-id
-- detect sheet-id
 - test.check
 - circle ci
+- use transaction for db
 - github release
 - support mysql
 - support sqlite
@@ -55,6 +49,11 @@ java 8+
 
 
 ## Usage
+
+- run init command
+- fill out config json
+- start server
+- visit oauth url and confirm
 
 
 

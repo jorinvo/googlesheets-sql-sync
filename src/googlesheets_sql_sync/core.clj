@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.core
   (:require [clojure.string :as s]
-            [clojure.core.async :refer [chan go go-loop alt! timeout close! >!! <!]]
+            [clojure.core.async :refer [chan go go-loop alt! timeout close! >!! <! <!!]]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [ring.middleware.params :refer [wrap-params]]
@@ -26,10 +26,12 @@
 
 (def defaults {:config-file-path "googlesheets_sql_sync.json"
                :config {:sheets [{:table "your_sql_table_name"
-                                  :spreadsheet-id "COPY AND PAST FROM URL IN BROWSER"
+                                  :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
                                   :target "TARGET NAME"}]
                         :targets {"TARGET NAME" {}}
-                        :google-credentials {:redirect-uri "http://localhost:9955/oauth"}
+                        :google_credentials {:client_id "COPY FROM GOOGLE CONSOLE"
+                                             :client_secret "COPY FROM GOOGLE CONSOLE"
+                                             :redirect_uri "http://localhost:9955/oauth"}
                         :port 9955
                         :interval {:minutes 30}}
                :sheet-range "A:ZZ"})
@@ -44,26 +46,26 @@
                           :access_type "offline"
                           :response_type "code"})
 
-(def default-server-params {:grant_type "authorization_code"})
+(def request-params-code    {:grant_type "authorization_code"})
+(def request-params-refresh {:grant_type "refresh_token"})
 
 (defn get-user-url [config]
-  (let [user-params (merge default-user-params
-                           {:client_id (get-in config [:google-credentials :client-id])
-                            :redirect_uri get-in config [:google-credentials :redirect-uri]})]
-    (str user-oauth-url "?" (http/generate-query-string user-params))))
+  (->> (select-keys (:google_credentials config) [:client_id :redirect_uri])
+       (merge default-user-params)
+       (http/generate-query-string)
+       (str user-oauth-url "?")))
 
 (defn pwd [] (System/getProperty "user.dir"))
 
-(defn generate-config [client-id client-secret]
+(defn write-json [data file]
+  (->> (json/generate-string data {:pretty true})
+       (spit file)))
+
+(defn generate-config []
   (let [file (str (pwd) "/" (:config-file-path defaults))]
     (println "generating" file)
-    (->> (-> defaults
-            :config
-            (assoc-in [:google-credentials :client-id] client-id)
-            (assoc-in [:google-credentials :client-secret] client-secret)
-            (json/generate-string {:pretty true}))
-        (spit file))
-    (println "generated" file)))
+    (write-json (:config defaults) file)
+    (println "done")))
 
 (defn fetch-sheet [token id]
   (http/get (str sheets-url id "/values/" (:sheet-range defaults))
@@ -71,10 +73,10 @@
              :as :json}))
 
 (defn get-sheet-with-data [token sheet]
-  (let [id (:spreadsheet-id sheet)]
+  (let [id (:spreadsheet_id sheet)]
     (println "fetching data for" id)
     {:sheet sheet
-     :rows (first (fetch-sheet token id))}))
+     :rows (get-in (fetch-sheet token id) [:body :values])}))
 
 (defn escape
   "Replace all c in text with \\c"
@@ -85,7 +87,7 @@
   (escape "hey \"you\"!" "\""))
 
 (defn create [db headers table]
-  (println "creating table" table)
+  (println table "- creating table")
   (let [columns (->> headers
                      (map #(str % " text"))
                      (s/join ", "))
@@ -93,12 +95,27 @@
     (jdbc/execute! db sql)))
 
 (defn get-columns [db table]
-  (println "fetching columns for table" table)
+  (println table "- fetching db columns for table")
+  (println "TODO this only works with special permission. use easier way to get columns")
   (let [sql (str "select column_name from information_schema.columns where table_name = '" (escape table "'") "';")]
     (jdbc/query db sql)))
 
-(defn setup-table [db sheet]
-  (let [table (get-in sheet [:sheet :table])
+(comment
+  (let [config (read-json (:config-file-path defaults))
+        sheet (first (:sheets config))]
+    (if (table-exists? (get-in config [:targets (keyword (:target sheet))]) (:table sheet))
+      "ok"
+      "nope")))
+
+(defn table-exists? [db table]
+  (println "checking if table exists" table)
+  (println "TODO this only works with special permission. use easier way to check this")
+  (let [sql (str "select 1 from information_schema.tables where table_name = '" (escape table "'") "';")]
+    (< 0 (count (jdbc/query db sql)))))
+
+(defn setup-table [config sheet]
+  (let [db (get-in config [:targets (keyword (get-in sheet [:sheet :target]))])
+        table (get-in sheet [:sheet :table])
         rows (:rows sheet)
         headers (->> rows
                      first
@@ -106,12 +123,12 @@
                      (map #(str "\"" % "\"")))
         columns (get-columns db table)
         data (rest rows)]
-    (if (> 1 (count columns))
-      (create db headers table)
-      (println "TODO check columns for changes here..."))
-    (println "clearing table" table)
+    (if (table-exists? db table)
+      (println "TODO check columns for changes here...")
+      (create db headers table))
+    (println table "- clearing table")
     (jdbc/execute! db (str "truncate table " table))
-    (println "writing " (count data) "rows to table" table)
+    (println table "- writing " (count data) "rows to table")
     (jdbc/insert-multi! db table headers data)
     sheet))
 
@@ -130,21 +147,15 @@
     (go-loop [t (f)]
       (alt!
         (timeout t) (recur (f))
-        stop :stop))
+        stop (do
+               (println "stopped interval")
+               :stop)))
     stop))
 
 (def not-found
   {:status 404
-    :headers {"Content-Type" "text/html"}
-    :body "not found"})
-
-(defn fetch-access-token [config code]
-  (let [params (merge default-server-params
-                      {:client_id (get-in config [:google-credentials :client-id])
-                       :client_secret (get-in config [:google-credentials :client-secret])
-                       :redirect_uri (get-in config [:google-credentials :redirect-uri])
-                       :code code})]
-    (http/post server-oauth-url {:form-params params :as :json})))
+   :headers {"Content-Type" "text/html"}
+   :body "not found"})
 
 (def ok
   {:status 200
@@ -155,14 +166,14 @@
   [code-chan]
   (fn [req]
     (if-not (and
-              (= :get (:request-method req))
-              (= oauth-route (:uri req)))
+             (= :get (:request-method req))
+             (= oauth-route (:uri req)))
       not-found
       (let [params (:params req)]
         (if-let [err (get params "error")]
           (println "got error" err)
           (let [code (get params "code")]
-            (println "got code" code)
+            (println "got code")
             (>!! code-chan code)))
         ok))))
 
@@ -170,22 +181,62 @@
   (json/parse-string (slurp path) true))
 
 (defn get-access-token [config]
-  (get-in config [:google-credentials :access-token]))
+  (get-in config [:google_credentials :access_token]))
+
+(defn fetch-access-token [config params]
+  (println "fetching access token")
+  (let [p (merge (select-keys (:google_credentials config) [:client_id :client_secret :redirect_uri])
+                 params)]
+    (-> (http/post server-oauth-url {:form-params p :as :json})
+        :body
+        (select-keys [:access_token :expires_in :refresh_token]))))
+
+(defn update-credentials
+  "re-reading config file just in case something changed during token HTTP fetch"
+  [config-file-path creds]
+  (println "updating config file" config-file-path)
+  (-> (read-json config-file-path)
+      (update :google_credentials #(merge % creds))
+      (write-json config-file-path))
+  (println "update done"))
+
+(defn refresh-access-token [config-file-path]
+  (println "refresh access token")
+  (let [config (read-json config-file-path)
+        params (merge request-params-refresh
+                      (select-keys (:google_credentials config) [:refresh_token]))
+        creds (fetch-access-token config params)]
+    (update-credentials config-file-path creds)))
+
+(defn handle-auth-code [config-file-path c]
+  (when c
+    (let [params (merge request-params-code {:code c})
+          config (read-json config-file-path)
+          creds  (fetch-access-token config params)]
+      (update-credentials config-file-path creds))))
 
 (defn do-sync [config-file-path]
+  (refresh-access-token config-file-path)
   (let [config (read-json config-file-path)
-        db (get-in config [:targets :bi])
         token (get-access-token config)]
-    (println "start sync")
+    (println "starting sync")
     (->> config
          :sheets
          (map #(get-sheet-with-data token %))
-         (run! #(setup-table db %)))
+         (run! #(setup-table config %)))
     (println "sync done")
     (interval-in-ms config)))
 
 (defn sync-in-interval [config-file-path]
   (set-interval #(do-sync config-file-path)))
+
+(defn handle-auth-codes [config-file-path code-chan]
+  (go-loop []
+    (if-let [c (<! code-chan)]
+      (do
+        (handle-auth-code config-file-path c)
+        (recur))
+      (println "stop handling auth codes"))))
 
 (defn run [config-file-path]
   (let [config (read-json config-file-path)
@@ -193,26 +244,26 @@
         handler (make-handler code-chan)
         app (-> handler wrap-params)
         server (ring-jetty/run-jetty app {:port (:port config)
-                                          :join? false})]
-    (go (<! code-chan))
-    (if (get-access-token config)
-      (do
-        (println "found access token")
-        (sync-in-interval config-file-path))
-      (do
-        (println "no access token found. initializing...")
-        (println "please visit the oauth url in your browser:")
-        (println (get-user-url config))))
-    server))
+                                          :join? false})
+        stop (chan)]
+    (when-not (get-access-token config)
+      (println "no access token found. initializing...")
+      (println "please visit the oauth url in your browser:")
+      (println (get-user-url config))
+      (handle-auth-code config-file-path (<!! code-chan)))
+    (println "found access token")
+    (handle-auth-codes config-file-path code-chan)
+    (let [syncer (sync-in-interval config-file-path)]
+      (go (<! stop)
+          (.stop server)
+          (close! syncer)
+          (close! code-chan)))
+    stop))
 
 (defn -main
   [& args]
   (cond
     (= 1 (count args)) (run (first args))
-    (= 2 (count args)) (generate-config (first args) (last args))
+    (= 0 (count args)) (generate-config)
     :else (do (println usage)
               (System/exit 1))))
-
-(comment
-  (.stop server)
-  (.start server))
