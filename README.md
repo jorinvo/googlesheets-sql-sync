@@ -12,10 +12,10 @@ If you sqlite or mysql support open an issue and support can be added in no time
 
 ## Roadmap
 
+- split code in files
+- robust error handling
 - sheet-title default to first sheet ?
-- optional path for init command
 - better sql statements
-- rebust error handling
 - allow sheet + range specification
 - detect schema change
   - log to stderr

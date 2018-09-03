@@ -63,17 +63,20 @@
   (->> (json/generate-string data {:pretty true})
        (spit file)))
 
-(defn generate-config []
-  (let [file (str (pwd) "/" (:config-file-path defaults))]
-    (if (.exists (io/as-file file))
-      (do
-        (println "stopping because fail already exists:" file)
-        false)
-      (do
-        (println "generating" file)
-        (write-json (:config defaults) file)
-        (println "done")
-        true))))
+(defn generate-config
+  ([]
+   (generate-config nil))
+  ([file-path]
+   (let [f (or file-path (str (pwd) "/" (:config-file-path defaults)))]
+     (if (.exists (io/as-file f))
+       (do
+         (println "stopping because file already exists:" f)
+         false)
+       (do
+         (println "generating" f)
+         (write-json (:config defaults) f)
+         (println "done")
+         true)))))
 
 (defn fetch-sheet [token id]
   (http/get (str sheets-url id "/values/" (:sheet-range defaults))
@@ -270,8 +273,11 @@
 
 (defn -main
   [& args]
-  (cond
-    (= 1 (count args)) (run (first args))
-    (= 0 (count args)) (if-not (generate-config) (System/exit 1))
-    :else (do (println usage)
-              (System/exit 1))))
+  (let [a1 (first args)
+        a2 (second args)
+        c (count args)]
+    (cond
+      (and (= "init" a1) (<= c 2)) (if-not (generate-config a2) (System/exit 1))
+      (= c 1) (run a1)
+      :else (do (println usage)
+                (System/exit 1)))))
