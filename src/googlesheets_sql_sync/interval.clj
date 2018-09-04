@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.interval
   (:require
-    [clojure.core.async :refer [alt! chan go-loop timeout]]))
+    [clojure.core.async :refer [alt! chan close! go-loop timeout]]))
 
 (defn to-ms [interval]
   (let [t interval
@@ -20,4 +20,4 @@
         stop (do
                (println "stopped interval")
                :stop)))
-    stop))
+    #(close! stop)))

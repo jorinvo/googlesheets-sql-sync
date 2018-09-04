@@ -16,7 +16,6 @@ If you sqlite or mysql support open an issue and support can be added in no time
 - sheet-title default to first sheet ?
 - better sql statements
 - allow sheet + range specification
-- trap ctrl-c sig for cleanup
 - detect schema change
   - log to stderr
   - send slack alert (default is no overwrite)
@@ -26,6 +25,7 @@ If you sqlite or mysql support open an issue and support can be added in no time
 - validate targets exist
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
 - refresh token in a smarter way
+- figure out how to wait for coroutines on close
 - logging
 - prometheus metrics
   - duration
@@ -60,6 +60,10 @@ java 8+
     lein repl
 
     lein uberjar
+
+### Use a library
+
+require `googlesheets-sql-sync.system`
 
 
 ## License

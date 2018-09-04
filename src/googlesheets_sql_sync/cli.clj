@@ -1,7 +1,8 @@
 (ns googlesheets-sql-sync.cli
   (:require
     [googlesheets-sql-sync.config :as config]
-    [googlesheets-sql-sync.system :as system]))
+    [googlesheets-sql-sync.system :as system]
+    [signal.handler :as signal]))
 
 (def usage "
 
@@ -25,10 +26,10 @@
         a2 (second args)
         c (count args)]
     (cond
-      (and (= "init" a1) (<= c 2)) (if (config/generate a2)
-                                     :ok
-                                     :not-ok)
-      (= c 1) (do (system/start a1)
-                  :ok)
-      :else (do (println usage)
-                :not-ok))))
+      (and (= "init" a1) (<= c 2))
+      (config/generate a2)
+      (= c 1)
+      (let [stop-system (system/start a1)]
+        (signal/with-handler :term (stop-system))
+        (signal/with-handler :int (stop-system)))
+      :else (do (println usage) :not-ok))))

@@ -31,14 +31,14 @@
 
 (defn handle-code [config-file-path c]
   (when c
-    (config/update-file
+    (config/merge-file
      config-file-path
      :google_credentials
      #(fetch-access-token % (merge default-params-code {:code c})))))
 
 (defn handle-refresh-token [config-file-path]
   (println "refresh access token")
-  (config/update-file
+  (config/merge-file
    config-file-path
    :google_credentials
    (fn [creds]

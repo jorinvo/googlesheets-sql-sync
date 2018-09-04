@@ -37,7 +37,6 @@
 (defn start [config-file-path]
   (let [c (config/read-file config-file-path)
         code-chan (chan)
-        stop (chan)
         stop-server (web/start c code-chan)]
     (when-not (get-access-token c)
       (println "no access token found. initializing...")
@@ -46,9 +45,8 @@
       (oauth/handle-code config-file-path (<!! code-chan)))
     (println "found access token")
     (go-handle-auth-codes config-file-path code-chan)
-    (let [syncer (sync-in-interval config-file-path)]
-      (go (<! stop)
-          (stop-server)
-          (close! syncer)
-          (close! code-chan)))
-    stop))
+    (let [stop-sync (sync-in-interval config-file-path)]
+      #(do (println "\nshutting down ...")
+           (stop-server)
+           (stop-sync)
+           (close! code-chan)))))
