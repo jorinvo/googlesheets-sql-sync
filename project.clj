@@ -16,4 +16,6 @@
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[cljfmt "0.5.1"]
                                   [jonase/eastwood "0.2.1" :exclusions [org.clojure/clojure]]
-                                  [jonase/kibit "0.1.5" :exclusions [org.clojure/clojure]]]}})
+                                  [jonase/kibit "0.1.5" :exclusions [org.clojure/clojure]]]}}
+  :repl-options {:init-ns googlesheets-sql-sync.system}
+  :omit-source true)

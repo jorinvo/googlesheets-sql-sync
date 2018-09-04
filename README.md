@@ -12,11 +12,11 @@ If you sqlite or mysql support open an issue and support can be added in no time
 
 ## Roadmap
 
-- split code in files
 - robust error handling
 - sheet-title default to first sheet ?
 - better sql statements
 - allow sheet + range specification
+- trap ctrl-c sig for cleanup
 - detect schema change
   - log to stderr
   - send slack alert (default is no overwrite)
@@ -55,7 +55,7 @@ java 8+
 - start server
 - visit oauth url and confirm
 
-
+    java -Xmx100m -Xms30m -jar target/uberjar/googlesheets-sql-sync-0.1.0-standalone.jar googlesheets_sql_sync.json
 
     lein repl
 
