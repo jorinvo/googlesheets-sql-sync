@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.system
   (:require
-   [clojure.core.async :refer [<! <!! chan close! go go-loop]]
+   [clojure.core.async :refer [<! chan close! go-loop]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
@@ -15,38 +15,45 @@
   (go-loop []
     (if-let [c (<! code-chan)]
       (do
-        (oauth/handle-code config-file-path c)
+        (try
+          (oauth/handle-code config-file-path c)
+          (catch Exception e (println "errror handling code" (.getMessage e))))
         (recur))
       (println "stop handling auth codes"))))
 
+(defn- show-init-message [c]
+  (println "no access token found. initializing...")
+  (println "please visit the oauth url in your browser:")
+  (println (oauth/get-url c)))
+
 (defn- do-sync [config-file-path]
-  (oauth/handle-refresh-token config-file-path)
-  (let [c (config/read-file config-file-path)
-        token (get-access-token c)]
-    (println "starting sync")
-    (->> c
-         :sheets
-         (map #(sheets/fetch-rows % token))
-         (run! #(db/update-table c %)))
-    (println "sync done")
+  ; TODO stop system on err
+  (let [c (config/read-file config-file-path)]
+    (if-let [token (get-access-token c)]
+      (try
+        (println "starting sync")
+        (oauth/handle-refresh-token config-file-path)
+        (->> c
+            :sheets
+            (map #(sheets/fetch-rows % token))
+            (run! #(db/update-table c %)))
+        (println "sync done")
+        (catch Exception e (println (.getMessage e))))
+      (show-init-message c))
     (interval/to-ms (:interval c))))
 
 (defn- sync-in-interval [config-file-path]
   (interval/start #(do-sync config-file-path)))
 
 (defn start [config-file-path]
+  ; TODO stop system on err
+  ; (catch java.io.FileNotFoundException e (prn (.getMessage e)))
   (let [c (config/read-file config-file-path)
         code-chan (chan)
-        stop-server (web/start c code-chan)]
-    (when-not (get-access-token c)
-      (println "no access token found. initializing...")
-      (println "please visit the oauth url in your browser:")
-      (println (oauth/get-url c))
-      (oauth/handle-code config-file-path (<!! code-chan)))
-    (println "found access token")
+        stop-server (web/start c code-chan)
+        stop-sync (sync-in-interval config-file-path)]
     (go-handle-auth-codes config-file-path code-chan)
-    (let [stop-sync (sync-in-interval config-file-path)]
-      #(do (println "\nshutting down ...")
-           (stop-server)
-           (stop-sync)
-           (close! code-chan)))))
+    #(do (println "\nshutting down ...")
+         (stop-server)
+         (stop-sync)
+         (close! code-chan))))

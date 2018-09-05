@@ -21,27 +21,36 @@
        (http/generate-query-string)
        (str user-oauth-url "?")))
 
+(defmacro try-http [msg body]
+  `(try
+    ~body
+    (catch Exception e (let [d (ex-data e)]
+                         (throw (ex-info (str "failed to " ~msg ": " (:status d) "\n" (:body d))
+                                         (select-keys d [:status :body])))))))
+
+
 (defn- fetch-access-token [creds params]
-  (println "fetching access token")
   (let [p (merge (select-keys creds [:client_id :client_secret :redirect_uri])
                  params)]
-    (-> (http/post server-oauth-url {:form-params p :as :json})
-        :body
-        (select-keys [:access_token :expires_in :refresh_token]))))
+    (try-http "fetch access token"
+      (-> (http/post server-oauth-url {:form-params p :as :json})
+          :body
+          (select-keys [:access_token :expires_in :refresh_token])))))
 
 (defn handle-code [config-file-path c]
   (when c
+    (println "handle auth code")
     (config/merge-file
-     config-file-path
-     :google_credentials
-     #(fetch-access-token % (merge default-params-code {:code c})))))
+      config-file-path
+      :google_credentials
+      #(fetch-access-token % (merge default-params-code {:code c})))))
 
 (defn handle-refresh-token [config-file-path]
   (println "refresh access token")
   (config/merge-file
-   config-file-path
-   :google_credentials
-   (fn [creds]
-     (->> (merge defaul-params-refresh
-                 (select-keys creds [:refresh_token]))
-          (fetch-access-token creds)))))
+    config-file-path
+    :google_credentials
+    (fn [creds]
+      (->> (merge defaul-params-refresh
+                  (select-keys creds [:refresh_token]))
+           (fetch-access-token creds)))))

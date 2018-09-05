@@ -1,5 +1,5 @@
 (defproject googlesheets-sql-sync "0.1.0"
-  :description "Easily keep your SQL database in sync with Google Sheets."
+  :description "Keep your SQL database in sync with Google Sheets"
   :url "https://github.com/jorinvo/googlesheets-sql-sync"
   :license {:name "MIT"
             :url "https://opensource.org/licenses/MIT"}

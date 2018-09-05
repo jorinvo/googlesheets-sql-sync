@@ -25,15 +25,17 @@
              (= oauth-route (:uri req)))
       not-found
       (let [params (:params req)]
-        (if-let [err (get params "error")]
-          (println "got error" err)
-          (let [code (get params "code")]
+        (if-let [code (get params "code")]
+          (do
             (println "got code")
-            (async/put! code-chan code)))
+            (async/put! code-chan code))
+          (println "got bad params" params))
         ok))))
 
 (defn start [config code-chan]
   (let [app (-> (make-handler code-chan) wrap-params)
         server (run-jetty app {:port (:port config)
+                               ; For only auth token it's unlikely we need more threads.
+                               :min-threads 1
                                :join? false})]
     #(.stop server)))

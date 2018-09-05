@@ -1,6 +1,6 @@
 # googlesheets-sql-sync
 
-Easily keep your SQL database in sync with Google Sheets.
+Keep your SQL database in sync with Google Sheets.
 
 Use this to let users manually insert data using Google Sheets
 while using all available SQL tooling for further processing.
@@ -13,8 +13,12 @@ If you sqlite or mysql support open an issue and support can be added in no time
 ## Roadmap
 
 - robust error handling
-- sheet-title default to first sheet ?
+  - config file not exists / malformed / permissions / write
+	- db
+	- http request
+- does sheet-title default to first sheet ?
 - better sql statements
+- ensure only one of do-sync and handle-code can happen at a time
 - allow sheet + range specification
 - detect schema change
   - log to stderr
@@ -24,7 +28,8 @@ If you sqlite or mysql support open an issue and support can be added in no time
 - validate interval > 0
 - validate targets exist
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
-- refresh token in a smarter way
+- refresh token in a smarter way (not every single time)
+- throttle API requests
 - figure out how to wait for coroutines on close
 - logging
 - prometheus metrics
