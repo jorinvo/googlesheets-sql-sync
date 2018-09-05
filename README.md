@@ -14,12 +14,17 @@ If you sqlite or mysql support open an issue and support can be added in no time
 
 - robust error handling
   - config file not exists / malformed / permissions / write
-	- db
-	- http request
+  - db
 - does sheet-title default to first sheet ?
-- better sql statements
+- trigger immediate sync via SIGALRM
 - ensure only one of do-sync and handle-code can happen at a time
-- allow sheet + range specification
+- throttle API requests
+- logging
+- prometheus metrics
+  - duration
+  - target and table as labels
+  - column count
+  - row count
 - detect schema change
   - log to stderr
   - send slack alert (default is no overwrite)
@@ -28,15 +33,10 @@ If you sqlite or mysql support open an issue and support can be added in no time
 - validate interval > 0
 - validate targets exist
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
+- better sql statements
+- allow sheet + range specification
 - refresh token in a smarter way (not every single time)
-- throttle API requests
 - figure out how to wait for coroutines on close
-- logging
-- prometheus metrics
-  - duration
-  - target and table as labels
-  - column count
-  - row count
 - find spreadsheet-title
 - test.check
 - circle ci
