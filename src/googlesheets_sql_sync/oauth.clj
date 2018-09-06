@@ -12,12 +12,12 @@
                           :access_type    "offline"
                           :response_type  "code"})
 
-(def default-params-code   {:grant_type "authorization_code"})
+(def default-params-code {:grant_type "authorization_code"})
 
 (def defaul-params-refresh {:grant_type "refresh_token"})
 
-(defn get-url [config]
-  (->> (select-keys (:google_credentials config) [:client_id :redirect_uri])
+(defn get-url [c]
+  (->> (select-keys (:google_credentials c) [:client_id :redirect_uri])
        (merge default-params-user)
        (http/generate-query-string)
        (str user-oauth-url "?")))
@@ -31,20 +31,23 @@
          :body
          (select-keys [:access_token :expires_in :refresh_token])))))
 
-(defn handle-code [config-file-path c]
-  (when c
+(defn handle-code [config-file code]
+  (when code
     (println "handle auth code")
     (config/merge-file
-     config-file-path
+     config-file
      :google_credentials
-     #(fetch-access-token % (merge default-params-code {:code c})))))
+     #(fetch-access-token % (merge default-params-code {:code code})))))
 
-(defn handle-refresh-token [config-file-path]
+(defn handle-refresh-token [config-file]
   (println "refresh access token")
-  (config/merge-file
-   config-file-path
-   :google_credentials
-   (fn [creds]
-     (->> (merge defaul-params-refresh
-                 (select-keys creds [:refresh_token]))
-          (fetch-access-token creds)))))
+  (try
+    (config/merge-file
+     config-file
+     :google_credentials
+     (fn [creds]
+       (->> (merge defaul-params-refresh
+                   (select-keys creds [:refresh_token]))
+            (fetch-access-token creds))))
+    :ok
+    (catch Exception e (println "errror handling code" (.getMessage e)))))

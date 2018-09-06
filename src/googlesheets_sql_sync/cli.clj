@@ -1,8 +1,9 @@
 (ns googlesheets-sql-sync.cli
   (:require
-    [googlesheets-sql-sync.config :as config]
-    [googlesheets-sql-sync.system :as system]
-    [signal.handler :as signal]))
+   [clojure.tools.cli :refer [parse-opts]]
+   [googlesheets-sql-sync.config :as config]
+   [googlesheets-sql-sync.system :as system]
+   [signal.handler :as signal]))
 
 (def usage "
 
@@ -20,16 +21,33 @@
 
 ")
 
+(defn print-usage [opts]
+  (println usage (:summary opts)))
+
+(def cli-options
+  ;; An option with a required argument
+  [["-p" "--port PORT" "Port number"
+    :default 9955
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+   ["-c" "--config-file PATH" "Config file path"
+    :default "googlesheets_sql_sync.json"]
+   [nil "--init" "Initialize a new config file"]
+   [nil "--auth-only" "Setup authentication, then quit. Don't sync."]
+   ["-h" "--help"]])
+
 (defn run
   [args]
-  (let [a1 (first args)
-        a2 (second args)
-        c (count args)]
+  (let [opts (parse-opts args cli-options)
+        ctx (:options opts)]
     (cond
-      (and (= "init" a1) (<= c 2))
-      (config/generate a2)
-      (= c 1)
-      (let [stop-system (system/start a1)]
-        (signal/with-handler :term (stop-system))
-        (signal/with-handler :int (stop-system)))
-      :else (do (println usage) :not-ok))))
+      (or (:help ctx) (and (:init ctx) (:auth ctx)))
+      (print-usage opts)
+
+      (:init ctx)
+      (config/generate ctx)
+
+      :else
+      (let [system (system/start ctx)]
+        (signal/with-handler :term (system/stop system))
+        (signal/with-handler :int (system/stop system))))))

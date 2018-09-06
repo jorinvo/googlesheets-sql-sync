@@ -7,6 +7,7 @@
                  [org.clojure/core.async "0.4.474"]
                  [org.clojure/java.jdbc "0.7.8"]
                  [org.postgresql/postgresql "42.2.4"]
+                 [org.clojure/tools.cli "0.3.7"]
                  [cheshire "5.8.0"]
                  [clj-http "3.9.1"]
                  [ring/ring-core "1.7.0-RC2"]

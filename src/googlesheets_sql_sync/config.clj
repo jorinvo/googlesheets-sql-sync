@@ -4,45 +4,39 @@
    [googlesheets-sql-sync.web :refer [oauth-route]]
    [clojure.java.io :as io]))
 
-(def default-file-path "googlesheets_sql_sync.json")
+(defn- get-default-config [ctx]
+  {:sheets [{:table          "your_sql_table_name"
+              :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
+              :target         "my_target"}]
+    :targets {"my_target" {}}
+    :google_credentials {:client_id     "COPY FROM GOOGLE CONSOLE"}
+                        :client_secret "COPY FROM GOOGLE CONSOLE"
+                        :redirect_uri  (str "http://localhost:" (:port ctx) oauth-route)
+    :interval {:minutes 30}})
 
-(def default-port 9955)
-
-(def default-config {:sheets [{:table          "your_sql_table_name"
-                               :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
-                               :target         "my_target"}]
-                     :targets {"my_target" {}}
-                     :google_credentials {:client_id     "COPY FROM GOOGLE CONSOLE"
-                                          :client_secret "COPY FROM GOOGLE CONSOLE"
-                                          :redirect_uri  (str "http://localhost:" default-port oauth-route)}
-                     :port default-port
-                     :interval {:minutes 30}})
-
-(defn- write-file [data file]
+(defn- write-file [data config-file]
   (->> (json/generate-string data {:pretty true})
-       (spit file)))
+       (spit config-file)))
 
-(defn read-file [path]
-  (json/parse-string (slurp path) true))
+(defn read-file [config-file]
+  (json/parse-string (slurp config-file) true))
 
 (defn generate
-  ([]
-   (generate nil))
-  ([file-path]
-   (let [f (or file-path default-file-path)]
+  ([ctx]
+   (let [f (:config-file ctx)]
      (if (.exists (io/as-file f))
        (do
          (println "stopping because file already exists:" f)
          :not-ok)
        (do
          (println "generating" f)
-         (write-file default-config f)
+         (write-file (get-default-config ctx) f)
          (println "done"))))))
 
 (defn merge-file
-  [config-file-path k f]
+  [config-file k func]
   ;re-reading config file just in case something changed during token HTTP fetch
-  (-> (read-file config-file-path)
-      (update k #(merge % (f %)))
-      (write-file config-file-path))
-  (println "updated config file" config-file-path))
+  (-> (read-file config-file)
+      (update k #(merge % (func %)))
+      (write-file config-file))
+  (println "updated config file" config-file))
