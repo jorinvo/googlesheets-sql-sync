@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.interval
   (:require
-    [clojure.core.async :refer [alt! chan close! go-loop timeout]]))
+   [clojure.core.async :as async :refer [<! >! close! go pipeline-async timeout]]))
 
 (defn to-ms [interval]
   (let [t interval
@@ -10,14 +10,19 @@
         s (-> t (get :seconds 0) (+ m) (* 1000))]
     s))
 
-(defn start
-  "see https://stackoverflow.com/a/28370388/986455"
-  [f]
-  (let [stop (chan)]
-    (go-loop [t (f)]
-      (alt!
-        (timeout t) (recur (f))
-        stop (do
-               (println "stopped interval")
-               :stop)))
-    #(close! stop)))
+(defn timeout-fn [t out>]
+  (if t
+    (go (<! (timeout t))
+        (>! out> [:sync])
+        (close! out>))
+    (close! out>)))
+
+(defn connect-timeouts [{:keys [timeout> work>]}]
+  (pipeline-async 1 work> timeout-fn timeout>))
+
+(comment
+  (let [a {:timeout> (async/chan) :work> (async/chan)}
+        b (connect-timeouts a)
+        {:keys [timeout> work>]} b]
+    (async/put! timeout> 1000)
+    (prn (async/<!! work>))))

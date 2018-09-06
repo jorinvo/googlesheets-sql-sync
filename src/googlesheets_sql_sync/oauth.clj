@@ -39,15 +39,16 @@
      :google_credentials
      #(fetch-access-token % (merge default-params-code {:code code})))))
 
-(defn handle-refresh-token [config-file]
+(defn refresh-token [config-file]
   (println "refresh access token")
-  (try
-    (config/merge-file
-     config-file
-     :google_credentials
-     (fn [creds]
-       (->> (merge defaul-params-refresh
-                   (select-keys creds [:refresh_token]))
-            (fetch-access-token creds))))
-    :ok
-    (catch Exception e (println "errror handling code" (.getMessage e)))))
+  (if (-> config-file config/read-file :google_credentials :refresh_token)
+    (try (-> (config/merge-file
+              config-file
+              :google_credentials
+              (fn [creds]
+                (->> (merge defaul-params-refresh
+                            (select-keys creds [:refresh_token])
+                            (fetch-access-token creds)))))
+             :google_credentials :access_token)
+         (catch Exception e (println "errror handling code" (.getMessage e))))
+    (println "No refresh_token found.")))

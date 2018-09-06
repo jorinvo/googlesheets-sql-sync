@@ -16,7 +16,8 @@
 
 (defn- write-file [data config-file]
   (->> (json/generate-string data {:pretty true})
-       (spit config-file)))
+       (spit config-file))
+  data)
 
 (defn read-file [config-file]
   (json/parse-string (slurp config-file) true))
@@ -36,7 +37,7 @@
 (defn merge-file
   [config-file k func]
   ;re-reading config file just in case something changed during token HTTP fetch
+  (println "update config file" config-file)
   (-> (read-file config-file)
       (update k #(merge % (func %)))
-      (write-file config-file))
-  (println "updated config file" config-file))
+      (write-file config-file)))

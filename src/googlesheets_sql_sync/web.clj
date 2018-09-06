@@ -20,18 +20,17 @@
    :body "All good! Close this window and have a look at your terminal."})
 
 (defn- make-handler
-  [ctx]
+  [{:keys [work>]}]
   (fn [req]
     (if-not (and
              (= :get (:request-method req))
              (= oauth-route (:uri req)))
       not-found
-      (let [params (:params req)
-            code-chan (:code-chan ctx)]
+      (let [params (:params req)]
         (if-let [code (get params "code")]
           (do
             (println "got code")
-            (async/put! code-chan code))
+            (async/put! work> [:code code]))
           (println "got bad params" params))
         ok))))
 

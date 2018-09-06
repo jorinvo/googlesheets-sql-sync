@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.system
   (:require
-   [clojure.core.async :refer [<! chan close! go-loop]]
+   [clojure.core.async :as async :refer [<! >! >!! alt! chan close! dropping-buffer go-loop pipeline-async]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
@@ -8,96 +8,65 @@
    [googlesheets-sql-sync.sheets :as sheets]
    [googlesheets-sql-sync.web :as web]))
 
-(defn- get-access-token [config]
-  (get-in config [:google_credentials :access_token]))
+(defn- show-init-message [c]
+  (println "Please visit the oauth url in your browser:")
+  (println (oauth/get-url c)))
 
-(defn- show-init-message
-  ([c] (show-init-message c true))
-  ([c new?]
-   (when new?
-     (println "no access token found."))
-   (println "Authenticating...\n Please visit the oauth url in your browser:")
-   (println (oauth/get-url c))))
-
-(defn- do-sync [config-file]
-  ; TODO stop system on err
-  (let [c (config/read-file config-file)]
-    (if-let [token (get-access-token c)]
-      (try
-        (println "starting sync")
-        (oauth/handle-refresh-token config-file)
-        (->> c
-             :sheets
-             (map #(sheets/fetch-rows % token))
-             (run! #(db/update-table c %)))
-        (println "sync done")
-        (catch Exception e (println (.getMessage e) (ex-data e))))
-      (show-init-message c))
-    (interval/to-ms (:interval c))))
-
-(defn- call-maybe [m k]
-  (when-let [f (k m)]
-    (f)))
-
-(defn stop [ctx]
+(defn stop [{:keys [stop-server timeout> work>]}]
   (println "\nshutting down ...")
-  (call-maybe ctx :stop-server)
-  (call-maybe ctx :stop-sync)
-  (close! (:code-chan ctx)))
+  (when stop-server (stop-server))
+  (close! timeout>)
+  (close! work>))
 
-(defn- go-handle-auth-codes [ctx]
-  (println "setup auth code handler")
-  (let [code-chan (:code-chan ctx)
-        auth-only (:auth-only ctx)]
-    (go-loop []
-      (if-let [code (<! code-chan)]
-        (do
-          (try
-            (oauth/handle-code (:config-file ctx) code)
-            (catch Exception e (println "errror handling code" (.getMessage e))))
+(defn- do-sync [{:keys [auth-only config-file timeout>] :as ctx}]
+  (println "do sync")
+  ; TODO stop system on err
+  (try
+    (let [c (config/read-file config-file)]
+      (try
+        (if-let [token (oauth/refresh-token config-file)]
           (if auth-only
-            (do
-              (println "auth done")
-              (stop ctx))
-            (recur)))
-        (println "stop handling auth codes"))))
-  ctx)
+            (do (println "Authentication done.")
+                (stop ctx))
+            (->> (:sheets c)
+                 (map #(sheets/fetch-rows % token))
+                 (run! #(db/update-table c %))))
+          (show-init-message c))
+        (catch Exception e (println (.getMessage e) (ex-data e))))
+      (async/put! timeout> (interval/to-ms (:interval c))))
+    (catch java.io.FileNotFoundException e (do (println (.getMessage e))
+                                               (stop ctx)))))
 
-(defn- auth [ctx]
-  (when (:auth-only ctx)
-    (let [config-file (:config-file ctx)
-          c (config/read-file config-file)]
-      (if (get-access-token c)
-        (do
-          (println "Found access token.")
-          (if (oauth/handle-refresh-token config-file)
-            (do
-              (println "Token valid. Nothing to do.")
-              (stop ctx))
-            (show-init-message c false)))
-        (show-init-message c))))
-  ctx)
+(defn- handle-code [{:keys [config-file]} code]
+  (println "handle code")
+  (try
+    (oauth/handle-code config-file code)
+    (catch Exception e (println "errror handling code" (.getMessage e)))))
 
-(defn- sync-in-interval [ctx]
-  (if (:auth-only ctx)
-    ctx
-    (let [config-file (:config-file ctx)]
-      (println "start interval scheduler")
-      (assoc ctx :stop-sync (interval/start #(do-sync config-file))))))
+(defn- start-worker [{:keys [work>] :as ctx}]
+  (println "start worker")
+  (go-loop []
+    (if-let [[job code] (<! work>)]
+      (do (case job
+            :sync (do-sync ctx)
+            :code (handle-code ctx code))
+          (recur))
+      (println "stopping worker")))
+  (async/put! work> [:sync]))
 
 (defn start [ctx]
-  ; TODO stop system on err
-  ; (catch java.io.FileNotFoundException e (prn (.getMessage e)))
   (-> ctx
-      (assoc :code-chan (chan))
+      (assoc :work> (chan))
+      (assoc :timeout> (chan (dropping-buffer 1)))
       web/start
-      sync-in-interval
-      go-handle-auth-codes
-      auth))
+      (doto interval/connect-timeouts start-worker)))
+
+(defn trigger-sync [{:keys [work>]}]
+  (>!! work> [:sync]))
 
 (comment
-  (prn s)
   (do
     (stop s)
-    (def s (start {:port 9955
-                   :config-file "googlesheets_sql_sync.json"}))))
+    (def s (start {:port 9955 :config-file "googlesheets_sql_sync.json"})))
+  (def s (start {:port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true}))
+  (config/generate {:port 9955 :config-file "googlesheets_sql_sync.json"}))

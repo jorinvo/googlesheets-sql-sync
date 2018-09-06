@@ -50,4 +50,5 @@
       :else
       (let [system (system/start ctx)]
         (signal/with-handler :term (system/stop system))
-        (signal/with-handler :int (system/stop system))))))
+        (signal/with-handler :int (system/stop system))
+        (signal/with-handler :alrm (system/trigger-sync system))))))

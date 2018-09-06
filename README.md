@@ -21,8 +21,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 ## Roadmap
 
 - trigger immediate sync via SIGALRM
-- Save creds separate to not conflict with config edits
-- Ensure only one of do-sync and handle-code can happen at a time
 - throttle API requests
 - robust error handling
   - config file not exists / malformed / permissions / write
@@ -41,6 +39,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - spec for config
 - validate interval > 0
 - validate targets exist
+- Save creds separate to not conflict with config edits
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
 - better sql statements
 - allow sheet + range specification
