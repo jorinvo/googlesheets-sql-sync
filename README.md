@@ -20,7 +20,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- trigger immediate sync via SIGALRM
 - throttle API requests
 - logging
 - does sheet-title default to first sheet ?
