@@ -22,9 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 - trigger immediate sync via SIGALRM
 - throttle API requests
-- robust error handling
-  - config file not exists / malformed / permissions / write
-  - db
 - logging
 - does sheet-title default to first sheet ?
 - prometheus metrics

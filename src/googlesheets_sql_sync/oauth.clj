@@ -22,33 +22,34 @@
        (http/generate-query-string)
        (str user-oauth-url "?")))
 
-(defn- fetch-access-token [creds params]
+(defn- get-access-token [creds params]
   (let [p (merge (select-keys creds [:client_id :client_secret :redirect_uri])
                  params)]
     (try-http
-     "fetch access token"
+     "Fetching access token"
      (-> (http/post server-oauth-url {:form-params p :as :json})
          :body
          (select-keys [:access_token :expires_in :refresh_token])))))
 
-(defn handle-code [config-file code]
-  (when code
-    (println "handle auth code")
+(defn handle-code [{:keys [config-file]} code]
+  (println "Handling auth code")
+  (try
     (config/merge-file
      config-file
      :google_credentials
-     #(fetch-access-token % (merge default-params-code {:code code})))))
+     #(get-access-token % (merge default-params-code {:code code})))
+    (catch Exception e (println "errror handling code" (.getMessage e)))))
 
 (defn refresh-token [config-file]
-  (println "refresh access token")
+  (println "Refreshing access token")
   (if (-> config-file config/read-file :google_credentials :refresh_token)
     (try (-> (config/merge-file
               config-file
               :google_credentials
               (fn [creds]
-                (->> (merge defaul-params-refresh
-                            (select-keys creds [:refresh_token])
-                            (fetch-access-token creds)))))
+                (let [params (merge defaul-params-refresh
+                                    (select-keys creds [:refresh_token]))]
+                  (get-access-token creds params))))
              :google_credentials :access_token)
-         (catch Exception e (println "errror handling code" (.getMessage e))))
-    (println "No refresh_token found.")))
+         (catch Exception e (println "errror handling code:" (.getMessage e))))
+    (println "No refresh_token found")))

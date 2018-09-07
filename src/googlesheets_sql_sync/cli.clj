@@ -39,8 +39,13 @@
 (defn run
   [args]
   (let [opts (parse-opts args cli-options)
-        ctx (:options opts)]
+        ctx (:options opts)
+        errs (:errors opts)]
     (cond
+      errs
+      (do (run! #(println %) errs)
+          :not-ok)
+
       (or (:help ctx) (and (:init ctx) (:auth ctx)))
       (print-usage opts)
 

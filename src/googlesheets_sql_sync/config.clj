@@ -6,13 +6,13 @@
 
 (defn- get-default-config [ctx]
   {:sheets [{:table          "your_sql_table_name"
-              :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
-              :target         "my_target"}]
-    :targets {"my_target" {}}
-    :google_credentials {:client_id     "COPY FROM GOOGLE CONSOLE"}
+             :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
+             :target         "my_target"}]
+   :targets {"my_target" {}}
+   :google_credentials {:client_id     "COPY FROM GOOGLE CONSOLE"
                         :client_secret "COPY FROM GOOGLE CONSOLE"
-                        :redirect_uri  (str "http://localhost:" (:port ctx) oauth-route)
-    :interval {:minutes 30}})
+                        :redirect_uri  (str "http://localhost:" (:port ctx) oauth-route)}
+   :interval {:minutes 30}})
 
 (defn- write-file [data config-file]
   (->> (json/generate-string data {:pretty true})
@@ -27,7 +27,7 @@
    (let [f (:config-file ctx)]
      (if (.exists (io/as-file f))
        (do
-         (println "stopping because file already exists:" f)
+         (println "Stopping because file already exists:" f)
          :not-ok)
        (do
          (println "generating" f)
@@ -37,7 +37,7 @@
 (defn merge-file
   [config-file k func]
   ;re-reading config file just in case something changed during token HTTP fetch
-  (println "update config file" config-file)
+  (println "Updating config file" config-file)
   (-> (read-file config-file)
       (update k #(merge % (func %)))
       (write-file config-file)))

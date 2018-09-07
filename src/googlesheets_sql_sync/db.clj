@@ -1,7 +1,7 @@
 (ns googlesheets-sql-sync.db
   (:require
-    [clojure.java.jdbc :as jdbc]
-    [clojure.string :as string]))
+   [clojure.java.jdbc :as jdbc]
+   [clojure.string :as string]))
 
 (defn- escape
   "Replace all c in text with \\c"
@@ -14,8 +14,8 @@
 (defn- create [db headers table]
   (println table "- creating table")
   (let [cols (->> headers
-                     (map #(str % " text"))
-                     (string/join ", "))
+                  (map #(str % " text"))
+                  (string/join ", "))
         s (str "create table " table " ( " cols " )")]
     (jdbc/execute! db s)))
 
@@ -33,19 +33,23 @@
     (< 0 (count (jdbc/query db s)))))
 
 (defn update-table [config sheet]
-  (let [db (get-in config [:targets (keyword (get-in sheet [:sheet :target]))])
-        table (get-in sheet [:sheet :table])
+  (let [target (-> sheet :sheet :target)
+        db (get-in config [:targets (keyword target)])
+        table (-> sheet :sheet :table)
         rows (:rows sheet)
         headers (->> rows
                      first
                      (map #(escape % "\""))
                      (map #(str "\"" % "\"")))
-        data (rest rows)]
-    (if (table-exists? db table)
-      (println "TODO check columns for changes here...")
-      (create db headers table))
-    (println table "- clearing table")
-    (jdbc/execute! db (str "truncate table " table))
-    (println table "- writing " (count data) "rows to table")
-    (jdbc/insert-multi! db table headers data)
-    sheet))
+        data (map #(concat % (repeat (- (count headers) (count %)) "")) (rest rows))]
+    (try
+      (println "update table" table)
+      (if (table-exists? db table)
+        (println "TODO check columns for changes here...")
+        (create db headers table))
+      (println table "- clearing table")
+      (jdbc/execute! db (str "truncate table " table))
+      (println table "- writing " (count data) "rows to table")
+      (jdbc/insert-multi! db table headers data)
+      sheet
+      (catch Exception e (throw (Exception. (str "There was a problem with the target \"" target "\": " (.getMessage e))))))))

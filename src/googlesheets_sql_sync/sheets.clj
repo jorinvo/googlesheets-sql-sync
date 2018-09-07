@@ -13,9 +13,7 @@
         headers {"Authorization" (str "Bearer " token)}]
     (println "fetching data for" id)
     (try-http "fetch sheet rows"
-      (-> (http/get url {:headers headers :as :json})
-          :body
-          :values
-          (as-> rows
-            {:sheet sheet}
-            :rows rows)))))
+              (let [resp (http/get url {:headers headers :as :json})
+                    rows (-> resp :body :values)]
+                {:sheet sheet
+                 :rows rows}))))

@@ -29,19 +29,21 @@
       (let [params (:params req)]
         (if-let [code (get params "code")]
           (do
-            (println "got code")
+            (println "Got code")
             (async/put! work> [:code code]))
-          (println "got bad params" params))
+          (println "Got bad params" params))
         ok))))
 
 (defn start
   [ctx]
-  (println "start server")
-  (let [port (:port ctx)
-        app (-> (make-handler ctx) wrap-params)
-        server (run-jetty app {:port port
-                               ; For only auth token it's unlikely we need more threads.
-                               :min-threads 1
-                               :join? false})]
-    (println "Server listening on port" port)
-    (assoc ctx :stop-server #(.stop server))))
+  (println "Starting server")
+  (try
+    (let [port (:port ctx)
+          app (-> (make-handler ctx) wrap-params)
+          server (run-jetty app {:port port
+                                 ; For only auth token it's unlikely we need more threads.
+                                 :min-threads 1
+                                 :join? false})]
+      (println "Server listening on port" port)
+      (assoc ctx :stop-server #(.stop server)))
+    (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e)))))))
