@@ -20,7 +20,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- throttle API requests
 - logging
 - does sheet-title default to first sheet ?
 - prometheus metrics
@@ -40,7 +39,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - better sql statements
 - allow sheet + range specification
 - refresh token in a smarter way (not every single time)
-- figure out how to wait for coroutines on close
 - find spreadsheet-title
 - test.check
 - circle ci

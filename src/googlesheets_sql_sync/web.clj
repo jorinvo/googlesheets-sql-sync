@@ -1,6 +1,5 @@
 (ns googlesheets-sql-sync.web
   (:require
-   [clj-http.client :as http]
    [clojure.core.async :as async]
    [ring.adapter.jetty :refer [run-jetty]]
    [ring.middleware.params :refer [wrap-params]]))

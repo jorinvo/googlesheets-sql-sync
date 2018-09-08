@@ -1,8 +1,8 @@
 (ns googlesheets-sql-sync.oauth
   (:require
-   [clj-http.client :as http]
+   [clj-http.client :refer [generate-query-string parse-url]]
    [googlesheets-sql-sync.config :as config]
-   [googlesheets-sql-sync.util :refer [try-http]]))
+   [googlesheets-sql-sync.http :as http]))
 
 (def user-oauth-url   "https://accounts.google.com/o/oauth2/v2/auth")
 (def server-oauth-url "https://www.googleapis.com/oauth2/v4/token")
@@ -19,20 +19,23 @@
 (defn url [c]
   (->> (select-keys (:google_credentials c) [:client_id :redirect_uri])
        (merge default-params-user)
-       (http/generate-query-string)
+       generate-query-string
        (str user-oauth-url "?")))
 
 (defn local-redirect? [c]
-  (-> c :google_credentials :redirect_uri http/parse-url :server-name (= "localhost")))
+  (-> c
+      :google_credentials
+      :redirect_uri
+      parse-url
+      :server-name
+      (= "localhost")))
 
 (defn- get-access-token [creds params]
   (let [p (merge (select-keys creds [:client_id :client_secret :redirect_uri])
                  params)]
-    (try-http
-     "Fetching access token"
-     (-> (http/post server-oauth-url {:form-params p :as :json})
-         :body
-         (select-keys [:access_token :expires_in :refresh_token])))))
+    (-> (http/post "fetch access token" server-oauth-url {:form-params p :as :json})
+        :body
+        (select-keys [:access_token :expires_in :refresh_token]))))
 
 (defn handle-code [{:keys [config-file]} code]
   (println "Handling auth code")

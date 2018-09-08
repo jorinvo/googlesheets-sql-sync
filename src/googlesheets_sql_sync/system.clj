@@ -31,7 +31,7 @@
                 (stop ctx))
             (do
               (->> (:sheets c)
-                   (map #(sheets/fetch-rows % token))
+                   (map #(sheets/get-rows % token))
                    (run! #(db/update-table c %)))
               (println "Sync done")))
           (show-init-message c))
