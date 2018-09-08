@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.system
   (:require
    [clojure.core.async :as async :refer [<! >!! chan close! dropping-buffer go-loop]]
+   [clojure.java.browse :refer [browse-url]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
@@ -15,8 +16,10 @@
   (when stop-server (stop-server)))
 
 (defn- show-init-message [c]
-  (println "Please visit the oauth url in your browser:")
-  (println (oauth/get-url c)))
+  (let [url (oauth/url c)]
+    (println "Please visit the oauth url in your browser:\n" url)
+    (when (oauth/local-redirect? c)
+      (browse-url url))))
 
 (defn- do-sync [{:keys [auth-only config-file timeout>] :as ctx}]
   (try
@@ -67,6 +70,6 @@
 (comment
   (do
     (stop s)
-    (def s (start {:port 9955 :config-file "googlesheets_sql_sync.json"})))
+    (def s (start {:port 9955 :config-file "c.json"})))
   (def s (start {:port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true}))
   (config/generate {:port 9955 :config-file "googlesheets_sql_sync.json"}))

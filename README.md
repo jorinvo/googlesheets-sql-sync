@@ -48,7 +48,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - github release
 - support mysql
 - support sqlite
-- if localhost, use https://clojuredocs.org/clojure.java.browse
 
 
 
