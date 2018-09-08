@@ -11,26 +11,35 @@
 (comment
   (escape "hey \"you\"!" "\""))
 
-(defn- create [db headers table]
-  (println table "- creating table")
+(defn- create-table [db headers table]
+  (println "Creating table")
   (let [cols (->> headers
                   (map #(str % " text"))
                   (string/join ", "))
         s (str "create table " table " ( " cols " )")]
     (jdbc/execute! db s)))
 
-; TODO use this and compare to data headers
-(defn- get-columns [db table]
-  (println table "- fetching db columns for table")
-  (println "TODO this only works with special permission. use easier way to get columns")
-  (let [s (str "select column_name from information_schema.columns where table_name = '" (escape table "'") "';")]
-    (jdbc/query db s)))
+(defn- get-headers [db table]
+  (println "Getting table headers")
+  (let [s (str "select * from \"" (escape table "\"") "\" limit 1")]
+    (try
+      (-> (jdbc/query db s {:identifiers identity
+                            :keywordize? false})
+          first
+          keys)
+      (catch java.sql.SQLException e (if (.contains (.getMessage e) (str "ERROR: relation \"" table "\" does not exist"))
+                                       nil
+                                       (throw e))))))
 
-(defn- table-exists? [db table]
-  (println "checking if table exists" table)
-  (println "TODO this only works with special permission. use easier way to check this")
-  (let [s (str "select 1 from information_schema.tables where table_name = '" (escape table "'") "';")]
-    (< 0 (count (jdbc/query db s)))))
+(comment
+  (let [db {:dbtype "postgresql"
+            :dbname "bi"
+            :host "localhost"
+            :user "bi"}]
+    (get-headers db "hi")))
+
+(defn throw-db-err [target table e]
+  (throw (Exception. (str "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))))
 
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
@@ -39,17 +48,22 @@
         rows (:rows sheet)
         headers (->> rows
                      first
-                     (map #(escape % "\""))
-                     (map #(str "\"" % "\"")))
+                     (map #(escape % "\"")))
+        escaped-headers (map #(str "\"" % "\"") headers)
         data (map #(concat % (repeat (- (count headers) (count %)) "")) (rest rows))]
     (try
-      (println "update table" table)
-      (if (table-exists? db table)
-        (println "TODO check columns for changes here...")
-        (create db headers table))
-      (println table "- clearing table")
+      (println "Updating table" table)
+      (let [new-headers (get-headers db table)]
+        (if new-headers
+          (when (not= headers new-headers)
+            (throw (ex-info (str "Conflicting old and new table headers")
+                            {:table table}
+                            :old-headers headers
+                            :new-headers new-headers)))
+          (create-table db escaped-headers table)))
+      (println "Clearing table")
       (jdbc/execute! db (str "truncate table " table))
-      (println table "- writing " (count data) "rows to table")
-      (jdbc/insert-multi! db table headers data)
+      (println "Writing " (count data) "rows to table")
+      (jdbc/insert-multi! db table escaped-headers data)
       sheet
-      (catch Exception e (throw (Exception. (str "There was a problem with the target \"" target "\": " (.getMessage e))))))))
+      (catch Exception e (throw-db-err target table e)))))

@@ -9,6 +9,8 @@ SQL uses JDBC and bundles the PostgreSQL driver.
 Additional drivers can be added any time.
 If you sqlite or mysql support open an issue and support can be added in no time.
 
+API requests are limited to one per second.
+
 
 ## Assumptions and simplifications
 
@@ -27,16 +29,14 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
   - target and table as labels
   - column count
   - row count
-- detect schema change
-  - log to stderr
-  - send slack alert (default is no overwrite)
-  - add column works without conflict (can still slack notify)
 - spec for config
 - validate interval > 0
 - validate targets exist
+- code docs
+- setup instructions
+- support to run as library
 - Save creds separate to not conflict with config edits
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
-- better sql statements
 - allow sheet + range specification
 - refresh token in a smarter way (not every single time)
 - find spreadsheet-title
@@ -46,7 +46,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - github release
 - support mysql
 - support sqlite
-
+- add column works without conflict
 
 
 ## Installation
