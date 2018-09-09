@@ -29,9 +29,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
   - target and table as labels
   - column count
   - row count
-- spec for config
-- validate interval > 0
-- validate targets exist
+- spec for http requests
 - code docs
 - setup instructions
 - support to run as library
