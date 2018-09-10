@@ -22,14 +22,12 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- logging
 - does sheet-title default to first sheet ?
 - prometheus metrics
   - duration
   - target and table as labels
   - column count
   - row count
-- spec for http requests
 - code docs
 - setup instructions
 - support to run as library
