@@ -65,6 +65,7 @@
                            :not-ok))))
 
 (defn trigger-sync [{:keys [work>]}]
+  (println "Sync triggered")
   (>!! work> [:sync]))
 
 (comment

@@ -48,9 +48,6 @@
                                               ::minutes
                                               ::seconds)])))
 
-(comment
-  (s/valid? ::interval (:interval (default-config {:port 1234}))))
-
 (defn- targets-exist? [{:keys [sheets targets]}]
   (every? #(targets (keyword (:target %))) sheets))
 
@@ -67,6 +64,6 @@
                        targets-exist?))
 
 (defn valid-config [data]
-  (when-not (s/valid? ::config config)
-    (throw (Exception. (s/explain-str ::config config))))
-  config)
+  (when-not (s/valid? ::config data)
+    (throw (Exception. (s/explain-str ::config data))))
+  data)

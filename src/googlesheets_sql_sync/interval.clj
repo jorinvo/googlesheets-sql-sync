@@ -11,6 +11,10 @@
         s (-> t (get :seconds 0) (+ m) (* 1000))]
     s))
 
+(comment
+  (-> {:minutes 3 :seconds 2} ->ms (= 182000))
+  (-> {} ->ms (= 0)))
+
 (defn ->string [interval]
   (->> [:days :hours :minutes :seconds]
        (map #(when-let [t (get interval %)] (str t " " (name %))))

@@ -38,8 +38,28 @@
             :user "bi"}]
     (get-headers db "hi")))
 
-(defn throw-db-err [target table e]
+(defn- throw-db-err [target table e]
   (throw (Exception. (str "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))))
+
+(defn- empty-strings->nil [xs]
+  (->> xs
+       (map #(if (= "" %) nil %))))
+
+(comment
+  (empty-strings->nil ["" 1 "a" "" "" " "]))
+
+(defn- ensure-size [n xs]
+  (concat xs (repeat (- n (count xs)) nil)))
+
+(comment
+  (ensure-size 3 [1 2]))
+
+(defn- row-data [rows]
+  (let [h (count (first rows))]
+    (->> (rest rows)
+         (map #(map string/trim %))
+         (map empty-strings->nil)
+         (map #(ensure-size h %)))))
 
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
@@ -50,16 +70,16 @@
                      first
                      (map #(escape % "\"")))
         escaped-headers (map #(str "\"" % "\"") headers)
-        data (map #(concat % (repeat (- (count headers) (count %)) "")) (rest rows))]
+        data (row-data rows)]
     (try
       (println "Updating table" table)
       (let [new-headers (get-headers db table)]
         (if new-headers
           (when (not= headers new-headers)
             (throw (ex-info (str "Conflicting old and new table headers")
-                            {:table table}
-                            :old-headers headers
-                            :new-headers new-headers)))
+                            {:table table
+                             :old-headers headers
+                             :new-headers new-headers})))
           (create-table db escaped-headers table)))
       (println "Clearing table")
       (jdbc/execute! db (str "truncate table " table))

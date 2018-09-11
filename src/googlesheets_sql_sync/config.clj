@@ -45,3 +45,4 @@
   (-> (read-file config-file)
       (update k #(merge % (func %)))
       (write-file config-file)))
+

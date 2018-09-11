@@ -22,6 +22,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
+- add no-server option (use when auth is already done)
 - does sheet-title default to first sheet ?
 - prometheus metrics
   - duration
