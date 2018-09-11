@@ -35,14 +35,18 @@
 
 (defn start
   [ctx]
-  (println "Starting server")
-  (try
-    (let [port (:port ctx)
-          app (-> (make-handler ctx) wrap-params)
-          server (run-jetty app {:port port
-                                 ; For only auth token it's unlikely we need more threads.
-                                 :min-threads 1
-                                 :join? false})]
-      (println "Server listening on port" port)
-      (assoc ctx :stop-server #(.stop server)))
-    (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e)))))))
+  (if (:no-server ctx)
+    (do
+      (println "Server disabled")
+      ctx)
+    (try
+      (println "Starting server")
+      (let [port (:port ctx)
+            app (-> (make-handler ctx) wrap-params)
+            server (run-jetty app {:port port}
+                                  ; For only auth token it's unlikely we need more threads.
+                              :min-threads 1
+                              :join? false)]
+        (println "Server listening on port" port)
+        (assoc ctx :stop-server #(.stop server)))
+      (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e))))))))

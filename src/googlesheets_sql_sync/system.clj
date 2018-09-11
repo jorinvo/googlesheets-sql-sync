@@ -55,14 +55,20 @@
   (println "Worker started"))
 
 (defn start [ctx]
-  (try
-    (-> ctx
-        (assoc :work> (chan))
-        (assoc :timeout> (chan (dropping-buffer 1)))
-        web/start
-        (doto interval/connect-timeouts start-worker))
-    (catch Exception e (do (println "Error while starting:" (.getMessage e))
-                           :not-ok))))
+  (if (and (:auth-only ctx) (:no-server ctx))
+    (do
+      (println "Server is required for authentication")
+      :not-ok)
+    (try
+      (-> ctx
+          (assoc :work> (chan))
+          (assoc :timeout> (chan (dropping-buffer 1)))
+          web/start
+          (doto
+           interval/connect-timeouts
+            start-worker))
+      (catch Exception e (do (println "Error while starting:" (.getMessage e))
+                             :not-ok)))))
 
 (defn trigger-sync [{:keys [work>]}]
   (println "Sync triggered")
@@ -70,7 +76,6 @@
 
 (comment
   (do
-    (stop s)
-    (def s (start {:port 9955 :config-file "c.json"})))
-  (def s (start {:port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true}))
+    (stop s
+          (def s (start {:no-server true :port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true}))))
   (config/generate {:port 9955 :config-file "googlesheets_sql_sync.json"}))

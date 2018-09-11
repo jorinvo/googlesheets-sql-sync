@@ -34,6 +34,7 @@
     :default "googlesheets_sql_sync.json"]
    [nil "--init" "Initialize a new config file"]
    [nil "--auth-only" "Setup authentication, then quit. Don't sync."]
+   [nil "--no-server" "Disable server. Disables authentication and metrics."]
    ["-h" "--help"]])
 
 (defn run
