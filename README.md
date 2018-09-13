@@ -23,6 +23,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 ## Roadmap
 
 - does sheet-title default to first sheet ?
+- use real logger
 - prometheus metrics
   - duration
   - target and table as labels

@@ -47,7 +47,10 @@
       (do (run! #(println %) errs)
           :not-ok)
 
-      (or (:help ctx) (and (:init ctx) (:auth ctx)))
+      (or (:help ctx)
+          (and (:init ctx)
+               (or (:no-server ctx)
+                   (:auth ctx))))
       (print-usage opts)
 
       (:init ctx)

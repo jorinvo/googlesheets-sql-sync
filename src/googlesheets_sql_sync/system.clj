@@ -11,9 +11,12 @@
 
 (defn stop [{:keys [stop-server timeout> work>]}]
   (println "\nShutting down")
-  (close! work>)
-  (close! timeout>)
-  (when stop-server (stop-server)))
+  (when work>
+    (close! work>))
+  (when timeout>
+    (close! timeout>))
+  (when stop-server
+    (stop-server)))
 
 (defn- show-init-message [c]
   (let [url (oauth/url c)]
@@ -73,9 +76,3 @@
 (defn trigger-sync [{:keys [work>]}]
   (println "Sync triggered")
   (>!! work> [:sync]))
-
-(comment
-  (do
-    (stop s
-          (def s (start {:no-server true :port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true}))))
-  (config/generate {:port 9955 :config-file "googlesheets_sql_sync.json"}))
