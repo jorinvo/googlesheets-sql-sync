@@ -14,7 +14,8 @@
 
 (defn- with-server [f]
   (let [s (start {:port (get-free-port)
-                  :work> (chan)})]
+                  :work> (chan)
+                  :oauth-route ""})]
     (f s)
     ((:stop-server s))))
 
@@ -22,7 +23,7 @@
   (testing "get code"
     (with-server
       (fn [s]
-        (http/get (str "http://localhost:" (:port s) "/" oauth-route "?code=123"))
+        (http/get (str "http://localhost:" (:port s) "?code=123"))
         (is (= [:code "123"] (<!! (:work> s)))))))
 
   (testing "404"

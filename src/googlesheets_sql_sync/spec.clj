@@ -48,7 +48,9 @@
                                               ::minutes
                                               ::seconds)])))
 
-(defn- targets-exist? [{:keys [sheets targets]}]
+(defn- targets-exist?
+  "Check if targets in sheets actually exist"
+  [{:keys [sheets targets]}]
   (every? #(targets (keyword (:target %))) sheets))
 
 (comment
@@ -63,7 +65,10 @@
                                         ::interval])
                        targets-exist?))
 
-(defn valid-config [data]
+(defn valid-config
+  "Validates config data.
+  Throws error containing spec violation."
+  [data]
   (when-not (s/valid? ::config data)
     (throw (Exception. (s/explain-str ::config data))))
   data)

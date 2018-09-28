@@ -8,10 +8,10 @@
 (defn- try-http [msg f]
   (try
     (f)
-    (catch Exception e#
-      (let [d# (ex-data e#)]
-        (throw (ex-info (str "failed to " msg ": " (:status d#) "\n" (:body d#))
-                        (select-keys d# [:status :body])))))))
+    (catch Exception e
+      (let [d (ex-data e)]
+        (throw (ex-info (str "failed to " msg ": " (:status d) "\n" (:body d))
+                        (select-keys d [:status :body])))))))
 
 (defn- now []
   (.getTime (java.util.Date.)))

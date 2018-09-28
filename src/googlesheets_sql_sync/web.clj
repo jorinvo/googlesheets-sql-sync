@@ -4,10 +4,6 @@
    [ring.adapter.jetty :refer [run-jetty]]
    [ring.middleware.params :refer [wrap-params]]))
 
-(def default-port 9955)
-
-(def oauth-route "/oauth")
-
 (def not-found
   {:status 404
    :headers {"Content-Type" "text/html"}
@@ -19,7 +15,10 @@
    :body "All good! Close this window and have a look at your terminal."})
 
 (defn- make-handler
-  [{:keys [work>]}]
+  "Make a request handler that takes code from params
+  and writes it to the work> channel.
+  Returns handler."
+  [{:keys [work> oauth-route]}]
   (fn [req]
     (if-not (and
              (= :get (:request-method req))
@@ -34,15 +33,15 @@
         ok))))
 
 (defn start
-  [ctx]
-  (if (:no-server ctx)
+  "Start web server. Adds stop-server function to ctx. Returns ctx."
+  [{:keys [no-server port] :as ctx}]
+  (if no-server
     (do
       (println "Server disabled")
       ctx)
     (try
       (println "Starting server")
-      (let [port (:port ctx)
-            app (-> (make-handler ctx) wrap-params)
+      (let [app (wrap-params (make-handler ctx))
             server (run-jetty app {:port port
                                    ; For only auth token it's unlikely we need more threads.
                                    :min-threads 1

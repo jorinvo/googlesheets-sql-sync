@@ -40,7 +40,7 @@
 (defn handle-code [{:keys [config-file]} code]
   (println "Handling auth code")
   (try
-    (config/merge-file
+    (config/merge-in-file
      config-file
      :google_credentials
      #(get-access-token % (merge default-params-code {:code code})))
@@ -49,7 +49,7 @@
 (defn refresh-token [config-file]
   (println "Refreshing access token")
   (if (-> config-file config/read-file :google_credentials :refresh_token)
-    (try (-> (config/merge-file
+    (try (-> (config/merge-in-file
               config-file
               :google_credentials
               (fn [creds]

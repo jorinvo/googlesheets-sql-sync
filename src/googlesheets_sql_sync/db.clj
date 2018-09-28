@@ -19,7 +19,12 @@
         s (str "create table " table " ( " cols " )")]
     (jdbc/execute! db s)))
 
-(defn- get-headers [db table]
+(defn- get-headers
+  "Get headers of a table from DB.
+  Used technique will only work if table is not empty.
+  Doing this to keep it DB and permission independent.
+  Returns nil if table is empty or does not exist."
+  [db table]
   (println "Getting table headers")
   (let [s (str "select * from \"" (escape table "\"") "\" limit 1")]
     (try
@@ -27,9 +32,11 @@
                             :keywordize? false})
           first
           keys)
-      (catch java.sql.SQLException e (if (.contains (.getMessage e) (str "ERROR: relation \"" table "\" does not exist"))
-                                       nil
+      (catch java.sql.SQLException e (when-not (.contains
+                                                 (.getMessage e)
+                                                 (str "ERROR: relation \"" table "\" does not exist"))
                                        (throw e))))))
+
 
 (comment
   (let [db {:dbtype "postgresql"
@@ -42,24 +49,34 @@
   (throw (Exception. (str "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))))
 
 (defn- empty-strings->nil [xs]
-  (->> xs
-       (map #(if (= "" %) nil %))))
+  (map #(when-not (= "" %) %) xs))
 
 (comment
-  (empty-strings->nil ["" 1 "a" "" "" " "]))
+  (= '(nil 1 "a" nil nil " ")
+     (empty-strings->nil ["" 1 "a" "" "" " "])))
 
-(defn- ensure-size [n xs]
+(defn- ensure-size
+  "Append nil to xs until it is of size n."
+  [n xs]
   (concat xs (repeat (- n (count xs)) nil)))
 
 (comment
-  (ensure-size 3 [1 2]))
+  (= [1 2 nil]
+     (ensure-size 3 [1 2])))
 
-(defn- row-data [rows]
-  (let [h (count (first rows))]
-    (->> (rest rows)
-         (map #(map string/trim %))
-         (map empty-strings->nil)
-         (map #(ensure-size h %)))))
+(defn- check-header-conflicts [a b]
+  (when (not= a b)
+    (throw (ex-info (str "Conflicting old and new table headers")
+                    {:old-headers a
+                     :new-headers b}))))
+
+(defn- clear-table [db table]
+  (println "Clearing table")
+  (jdbc/execute! db (str "truncate table " table)))
+
+(defn- write-rows [db table headers rows]
+  (println "Writing " (count rows) "rows to table")
+  (jdbc/insert-multi! db table headers rows))
 
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
@@ -70,20 +87,17 @@
                      first
                      (map #(escape % "\"")))
         escaped-headers (map #(str "\"" % "\"") headers)
-        data (row-data rows)]
+        header-count (count headers)
+        data (->> (rest rows)
+                  (map #(map string/trim %))
+                  (map empty-strings->nil)
+                  (map #(ensure-size header-count %)))]
     (try
       (println "Updating table" table)
-      (let [new-headers (get-headers db table)]
-        (if new-headers
-          (when (not= headers new-headers)
-            (throw (ex-info (str "Conflicting old and new table headers")
-                            {:table table
-                             :old-headers headers
-                             :new-headers new-headers})))
-          (create-table db escaped-headers table)))
-      (println "Clearing table")
-      (jdbc/execute! db (str "truncate table " table))
-      (println "Writing " (count data) "rows to table")
-      (jdbc/insert-multi! db table escaped-headers data)
+      (if-let [new-headers (get-headers db table)]
+        (check-header-conflicts headers new-headers)
+        (create-table db escaped-headers table))
+      (clear-table db table)
+      (write-rows db table escaped-headers data)
       sheet
       (catch Exception e (throw-db-err target table e)))))

@@ -33,7 +33,6 @@
 
 (comment
   (let [a {:timeout> (async/chan) :work> (async/chan)}
-        b (connect-timeouts a)
-        {:keys [timeout> work>]} b]
+        b (connect-timeouts a)]
     (async/put! timeout> 1000)
     (prn (async/<!! work>))))

@@ -6,13 +6,14 @@
 
 (def default-sheet-range "A:ZZ")
 
-(defn get-rows [sheet token]
-  (let [id (:spreadsheet_id sheet)
-        url (str sheets-url id "/values/" default-sheet-range)
+(defn get-rows
+  "Fetch a sheet's data from the Google Spreadsheet API"
+  [sheet token]
+  (let [id      (:spreadsheet_id sheet)
+        url     (str sheets-url id "/values/" default-sheet-range)
         headers {"Authorization" (str "Bearer " token)}]
     (println "fetching data for" id)
-    (let [resp (http/get "fetch sheet rows" url {:headers headers
-                                                 :as :json})
+    (let [resp (http/get "fetch sheet rows" url {:headers headers :as :json})
           rows (-> resp :body :values)]
       {:sheet sheet
        :rows rows})))

@@ -23,10 +23,10 @@
 
 (def s nil)
 
-(defn load []
+(defn run []
   (when s
     (system/stop s))
   (def s (system/start {:port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true})))
 
 (comment
-  (load))
+  (run))
