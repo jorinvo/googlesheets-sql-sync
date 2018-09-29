@@ -10,6 +10,7 @@
    [clj-http.client :as clj-http]
    [cheshire.core :as json]
    [expound.alpha :as expound]
+   [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.http :as http]
@@ -17,16 +18,19 @@
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]
    [googlesheets-sql-sync.system :as system]
+   [googlesheets-sql-sync.throttle :as throttle]
    [googlesheets-sql-sync.web :as web]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
-(def s nil)
-
-(defn run []
-  (when s
-    (system/stop s))
-  (def s (system/start {:port 9955 :config-file "googlesheets_sql_sync.json" :auth-only true})))
+(def options {:port 9955
+              :config-file "googlesheets_sql_sync.json"
+              :auth-only true
+              :api-rate-limit 4000})
 
 (comment
-  (run))
+  (config/generate options)
+  (mount/stop)
+  (mount/find-all-states)
+  (mount/running-states)
+  (mount/start-with-args options))

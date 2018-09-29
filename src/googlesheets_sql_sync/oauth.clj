@@ -22,8 +22,8 @@
        generate-query-string
        (str user-oauth-url "?")))
 
-(defn local-redirect? [c]
-  (-> c
+(defn local-redirect? [cfg]
+  (-> cfg
       :google_credentials
       :redirect_uri
       parse-url
@@ -37,7 +37,7 @@
         :body
         (select-keys [:access_token :expires_in :refresh_token]))))
 
-(defn handle-code [{:keys [config-file]} code]
+(defn handle-code [config-file code]
   (println "Handling auth code")
   (try
     (config/merge-in-file

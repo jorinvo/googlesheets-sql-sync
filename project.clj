@@ -10,6 +10,7 @@
                  [org.clojure/tools.cli "0.3.7"]
                  [cheshire "5.8.0"]
                  [clj-http "3.9.1"]
+                 [mount "0.1.13"]
                  [ring/ring-core "1.7.0-RC2"]
                  [ring/ring-jetty-adapter "1.6.3"]
                  [spootnik/signal "0.2.1"]]

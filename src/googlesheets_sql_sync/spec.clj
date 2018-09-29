@@ -39,10 +39,10 @@
                                              ::expires_in
                                              ::refresh_token]))
 
-(s/def ::days pos-int?)
-(s/def ::hours pos-int?)
-(s/def ::minutes pos-int?)
-(s/def ::seconds pos-int?)
+(s/def ::days nat-int?)
+(s/def ::hours nat-int?)
+(s/def ::minutes nat-int?)
+(s/def ::seconds nat-int?)
 (s/def ::interval (s/and (s/keys :req-un [(or ::days
                                               ::hours
                                               ::minutes

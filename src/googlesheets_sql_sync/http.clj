@@ -1,9 +1,12 @@
 (ns googlesheets-sql-sync.http
   (:refer-clojure :exclude [get])
   (:require
-   [clj-http.client :as http]))
+   [clj-http.client :as http]
+   [mount.core :as mount]
+   [googlesheets-sql-sync.throttle :as throttle]))
 
-(def api-rate-limit 1000)
+(mount/defstate throttler
+  :start (throttle/make (:api-rate-limit (mount/args))))
 
 (defn- try-http [msg f]
   (try
@@ -13,29 +16,10 @@
         (throw (ex-info (str "failed to " msg ": " (:status d) "\n" (:body d))
                         (select-keys d [:status :body])))))))
 
-(defn- now []
-  (.getTime (java.util.Date.)))
-
-(defn- sleep [ms]
-  (Thread/sleep ms))
-
-(defn- throttle [f ms]
-  (let [t (atom 0)]
-    (fn [& args]
-      (let [t2 (now)
-            diff (- t2 @t)]
-        (when (< diff ms)
-          (sleep (- ms diff)))
-        (swap! t (fn [_] (now))))
-      (apply f args))))
-
-(comment
-  (time (let [h (throttle #(prn "hey" %) 2000)] (dotimes [n 3] (h n)))))
-
-(def throttled-try-http (throttle try-http api-rate-limit))
-
 (defn get [msg url req]
-  (throttled-try-http msg #(http/get url req)))
+  (throttle/wait throttler)
+  (try-http msg #(http/get url req)))
 
 (defn post [msg url req]
-  (throttled-try-http msg #(http/post url req)))
+  (throttle/wait throttler)
+  (try-http msg #(http/post url req)))

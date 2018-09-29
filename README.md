@@ -25,7 +25,9 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - try http-kit instead of jetty
 - Drop table before create if it was empty
 - does sheet-title default to first sheet ?
-- use real logger
+- use timbre logger
+- get rid of lein
+- handle reload os sig to reload config (?)
 - prometheus metrics
   - duration
   - target and table as labels

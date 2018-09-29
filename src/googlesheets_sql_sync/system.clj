@@ -2,58 +2,47 @@
   (:require
    [clojure.core.async :as async :refer [<!! >!! chan close! dropping-buffer]]
    [clojure.java.browse :refer [browse-url]]
+   [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.oauth :as oauth]
-   [googlesheets-sql-sync.sheets :as sheets]
-   [googlesheets-sql-sync.web :as web]))
-
-(defn stop
-  "Stops a system. If system is not running, nothing happens."
-  [{:keys [stop-server timeout> work>]}]
-  (println "\nShutting down")
-  (when work>
-    (close! work>))
-  (when timeout>
-    (close! timeout>))
-  (when stop-server
-    (stop-server)))
+   [googlesheets-sql-sync.sheets :as sheets]))
 
 (defn- show-init-message
   "Prompt user to visit auth URL.
   When running locally, open browser automatically."
-  [c]
-  (let [url (oauth/url c)]
+  [cfg]
+  (let [url (oauth/url cfg)]
     (println "Please visit the oauth url in your browser:\n" url)
-    (when (oauth/local-redirect? c)
+    (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [auth-only config-file no-server timeout>] :as ctx}]
+(defn- do-sync [{:keys [auth-only config-file no-server timeout>]}]
   (try
-    (let [c (config/read-file config-file)]
+    (let [cfg (config/read-file config-file)]
       (try
         (if-let [token (oauth/refresh-token config-file)]
           (if auth-only
             (do (println "Authentication done")
-                (stop ctx))
+                (System/exit 0))
             (do
-              (->> (:sheets c)
+              (->> (:sheets cfg)
                    (map #(sheets/get-rows % token))
-                   (run! #(db/update-table c %)))
+                   (run! #(db/update-table cfg %)))
               (println "Sync done")))
           (if no-server
             (do
               (println "Cannot authenticate when server is disabled")
-              (stop ctx))
-            (show-init-message c)))
+              (System/exit 1))
+            (show-init-message cfg)))
         (catch Exception e (println (.getMessage e) "\nSync failed")))
-      (println "Next sync in" (interval/->string (:interval c)))
-      (async/put! timeout> (interval/->ms (:interval c))))
+      (println "Next sync in" (interval/->string (:interval cfg)))
+      (async/put! timeout> (interval/->ms (:interval cfg))))
     (catch Exception e (do (println "Failed reading config file" (.getMessage e))
-                           (stop ctx)))))
+                           (System/exit 1)))))
 
-(defn- start-worker [{:keys [work>] :as ctx}]
+(defn- start-worker [{:keys [config-file work>] :as ctx}]
   (println "Starting worker")
   (async/put! work> [:sync])
   (loop []
@@ -61,21 +50,39 @@
       (do (case job
             :sync (do-sync ctx)
             :code (do
-                    (oauth/handle-code ctx code)
+                    (oauth/handle-code config-file code)
                     (do-sync ctx)))
           (recur))
       (println "Stopping worker"))))
 
-(defn start [ctx]
+(defn start
+  [options]
   (try
-    (-> ctx
-        (assoc :work> (chan))
-        (assoc :timeout> (chan (dropping-buffer 1)))
-        web/start
-        (doto interval/connect-timeouts start-worker))
+    (let [timeout> (chan (dropping-buffer 1))
+          work>    (chan)
+          ctx      {:work>    work>
+                    :timeout> timeout>}]
+      (interval/connect-timeouts ctx)
+      (start-worker (merge options ctx))
+      ctx)
     (catch Exception e (do (println "Error while starting:" (.getMessage e))
-                           :not-ok))))
+                           (System/exit 1)))))
 
-(defn trigger-sync [{:keys [work>]}]
-  (println "Sync triggered")
-  (>!! work> [:sync]))
+(defn stop
+  "Stops system. If system is not running, nothing happens."
+  [{:keys [timeout> work>]}]
+  (println "\nShutting down")
+  (when timeout>
+    (close! timeout>))
+  (when work>
+    (close! work>)))
+
+(mount/defstate state
+  :start (start (mount/args))
+  :stop (stop state))
+
+(defn trigger-sync
+  []
+  (let [{:keys [work>]} state]
+    (println "Sync triggered")
+    (>!! work> [:sync])))

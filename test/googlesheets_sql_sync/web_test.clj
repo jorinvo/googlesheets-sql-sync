@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.web-test
   (:require
-   [clojure.test :refer :all]
+   [clojure.test :refer [deftest testing is]]
    [clojure.core.async :refer [<!! chan]]
    [clj-http.client :as http]
    [googlesheets-sql-sync.web :refer :all]))
@@ -13,22 +13,23 @@
     (.getLocalPort socket)))
 
 (defn- with-server [f]
-  (let [s (start {:port (get-free-port)
-                  :work> (chan)
-                  :oauth-route ""})]
-    (f s)
-    ((:stop-server s))))
+  (let [ctx {:port (get-free-port)
+             :work> (chan)
+             :oauth-route "/"}
+        server (start ctx)]
+    (f ctx)
+    (stop server)))
 
 (deftest web
   (testing "get code"
     (with-server
-      (fn [s]
-        (http/get (str "http://localhost:" (:port s) "?code=123"))
-        (is (= [:code "123"] (<!! (:work> s)))))))
+      (fn [ctx]
+        (http/get (str "http://localhost:" (:port ctx) "?code=123"))
+        (is (= [:code "123"] (<!! (:work> ctx)))))))
 
   (testing "404"
     (with-server
-      (fn [s]
+      (fn [ctx]
         (try
-          (http/get (str "http://localhost:" (:port s)))
+          (http/get (str "http://localhost:" (:port ctx)))
           (catch Exception e (is (= 404 (-> e ex-data :status)))))))))

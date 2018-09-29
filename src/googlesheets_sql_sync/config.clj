@@ -25,8 +25,8 @@
   Return passed config."
   [data config-file]
   (spit
-    config-file
-    (json/generate-string (spec/valid-config data) {:pretty true}))
+   config-file
+   (json/generate-string (spec/valid-config data) {:pretty true}))
   data)
 
 (defn read-file
@@ -37,14 +37,12 @@
 (defn generate
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
-  (if (.exists (io/as-file config-file))
-    (do
-      (println "Stopping because file already exists:" config-file)
-      :not-ok)
-    (do
-      (println "generating" config-file)
-      (write-file (template-config port oauth-route) config-file)
-      (println "done"))))
+  (when (.exists (io/as-file config-file))
+    (println "Stopping because file already exists:" config-file)
+    (System/exit 1))
+  (println "generating" config-file)
+  (write-file (template-config port oauth-route) config-file)
+  (println "done"))
 
 (defn merge-in-file
   "Update value for given key k in config file by applying f to it
