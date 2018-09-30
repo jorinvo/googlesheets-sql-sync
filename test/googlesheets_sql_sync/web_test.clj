@@ -3,20 +3,14 @@
    [clojure.test :refer [deftest testing is]]
    [clojure.core.async :refer [<!! chan]]
    [org.httpkit.client :as http-client]
-   [googlesheets-sql-sync.web :refer :all]))
-
-(defn- get-free-port
-  "thanks https://gist.github.com/apeckham/78da0a59076a4b91b1f5acf40a96de69"
-  []
-  (let [socket (java.net.ServerSocket. 0)]
-    (.close socket)
-    (.getLocalPort socket)))
+   [googlesheets-sql-sync.web :as web]
+   [googlesheets-sql-sync.util :refer [get-free-port]]))
 
 (defn- with-server [f]
   (let [ctx {:port (get-free-port)
              :work> (chan)
              :oauth-route "/"}
-        server (start ctx)]
+        server (web/start ctx)]
     (f ctx)
     (server)))
 

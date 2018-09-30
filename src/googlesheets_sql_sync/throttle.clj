@@ -1,10 +1,6 @@
-(ns googlesheets-sql-sync.throttle)
-
-(defn- now []
-  (.getTime (java.util.Date.)))
-
-(defn- sleep [ms]
-  (Thread/sleep ms))
+(ns googlesheets-sql-sync.throttle
+  (:require
+   [googlesheets-sql-sync.util :refer [now sleep]]))
 
 (defn make [ms]
   {:last-time (atom 0)
@@ -21,10 +17,10 @@
                        (now)))))
 
 (comment
-  (let [t (make 2000)]
+  (let [t (make 1000)]
     (wait t)
-    (prn "hi")
+    (prn "one")
     (wait t)
-    (prn "ha")
+    (prn "two")
     (wait t)
-    (prn "ho")))
+    (prn "three")))

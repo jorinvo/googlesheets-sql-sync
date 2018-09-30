@@ -5,6 +5,7 @@
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.system :as system]
    [googlesheets-sql-sync.web]
+   [googlesheets-sql-sync.util :refer [valid-port?]]
    [mount.core :as mount]
    [signal.handler :as signal])
   (:gen-class))
@@ -30,7 +31,7 @@
   [["-p" "--port PORT" "Port number"
     :default 9955
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+    :validate [valid-port? "Must be a number between 0 and 65536"]]
    ["-c" "--config-file PATH" "Config file path"
     :default "googlesheets_sql_sync.json"]
    [nil "--oauth-route" "Set URL route path to used in OAuth redirect URL."
@@ -61,9 +62,10 @@
     (when-not (empty? errs) errs)))
 
 (comment
-  (invalid-flags {:init true :auth-only true})
-  (invalid-flags {:init true :auth-only true :no-server true})
-  (invalid-flags {}))
+  (= (invalid-flags {:init true :auth-only true})
+     '("Sorry, you cannot combine flags init and auth-only."))
+  (= (invalid-flags {})
+     nil))
 
 (defn- print-usage [{:keys [summary]}]
   (println usage)

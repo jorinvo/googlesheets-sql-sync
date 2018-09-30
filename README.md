@@ -41,7 +41,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - allow sheet + range specification
 - refresh token in a smarter way (not every single time)
 - find spreadsheet-title
-- test.check
 - circle ci
 - support mysql
 - support sqlite

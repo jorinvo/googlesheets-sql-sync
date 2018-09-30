@@ -1,7 +1,8 @@
 (ns googlesheets-sql-sync.spec
   (:require
    [clojure.java.jdbc.spec :as jdbc-spec]
-   [clojure.spec.alpha :as s]))
+   [clojure.spec.alpha :as s]
+   [googlesheets-sql-sync.util :refer [valid-url?]]))
 
 (s/def ::str-not-empty (s/and string? not-empty))
 
@@ -14,16 +15,6 @@
 
 (s/def ::targets (s/map-of keyword?
                            ::jdbc-spec/db-spec))
-
-(defn- valid-url? [s]
-  (try
-    (.toURL (java.net.URI. s))
-    true
-    (catch Exception e false)))
-
-(comment
-  (true? (valid-url? "http://localhost:80"))
-  (false? (valid-url? "http//localhost:80")))
 
 (s/def ::client_id ::str-not-empty)
 (s/def ::client_secret ::str-not-empty)
@@ -54,10 +45,10 @@
   (every? #(targets (keyword (:target %))) sheets))
 
 (comment
-  (targets-exist? {:sheets [{:target "a"} {:target "b"}]
-                   :targets {:a 1 :b {}}})
-  (false? (targets-exist? {:sheets [{:target "a"}]
-                           :targets {:b 1}})))
+  (= true targets-exist? {:sheets [{:target "a"} {:target "b"}]
+                          :targets {:a 1 :b {}}})
+  (= false (targets-exist? {:sheets [{:target "a"}]
+                            :targets {:b 1}})))
 
 (s/def ::config (s/and (s/keys :req-un [::sheets
                                         ::targets
