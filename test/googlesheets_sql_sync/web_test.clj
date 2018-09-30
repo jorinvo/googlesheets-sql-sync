@@ -2,7 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is]]
    [clojure.core.async :refer [<!! chan]]
-   [clj-http.client :as http]
+   [org.httpkit.client :as http-client]
    [googlesheets-sql-sync.web :refer :all]))
 
 (defn- get-free-port
@@ -18,18 +18,18 @@
              :oauth-route "/"}
         server (start ctx)]
     (f ctx)
-    (stop server)))
+    (server)))
 
 (deftest web
   (testing "get code"
     (with-server
       (fn [ctx]
-        (http/get (str "http://localhost:" (:port ctx) "?code=123"))
+        (let [{:keys [status]} @(http-client/get (str "http://localhost:" (:port ctx) "?code=123"))]
+          (is (= status 200)))
         (is (= [:code "123"] (<!! (:work> ctx)))))))
 
   (testing "404"
     (with-server
       (fn [ctx]
-        (try
-          (http/get (str "http://localhost:" (:port ctx)))
-          (catch Exception e (is (= 404 (-> e ex-data :status)))))))))
+        (let [{:keys [status]} @(http-client/get (str "http://localhost:" (:port ctx) "/nope"))]
+          (is (= status 404)))))))

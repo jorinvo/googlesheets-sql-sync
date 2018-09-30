@@ -2,7 +2,7 @@
   (:require
    [clojure.core.async :as async]
    [mount.core :as mount]
-   [ring.adapter.jetty :refer [run-jetty]]
+   [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
    [googlesheets-sql-sync.system :as system]))
 
@@ -39,18 +39,14 @@
   (try
     (println "Starting server")
     (let [app (wrap-params (make-handler oauth-route work>))
-          server (run-jetty app {:port port
+          server (run-server app {:port port
                                   ; For only auth token it's unlikely we need more threads.
-                                 :min-threads 1
-                                 :join? false})]
+                                  :thread 1})]
       (println "Server listening on port" port)
       server)
     (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e)))))))
 
-(defn stop [server]
-  (.stop server))
-
 (mount/defstate server
   :start (start (merge (mount/args)
                        (select-keys system/state [:work>])))
-  :stop (stop server))
+  :stop (server))

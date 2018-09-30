@@ -1,4 +1,4 @@
-(ns googlesheets-sql-sync.dev
+(ns dev
   (:require
    [clojure.core.async :as async :refer [<! >! >!! chan close! dropping-buffer go go-loop pipeline-async timeout]]
    [clojure.java.browse :refer [browse-url]]
@@ -7,7 +7,7 @@
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
    [clojure.string :as string]
-   [clj-http.client :as clj-http]
+   [org.httpkit.client :as http-client]
    [cheshire.core :as json]
    [expound.alpha :as expound]
    [mount.core :as mount]

@@ -22,20 +22,20 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- try http-kit instead of jetty
+- How to keep running without server (wait for go routines)
 - Drop table before create if it was empty
 - does sheet-title default to first sheet ?
-- use timbre logger
+- use transaction for db
+- github release
+- code docs
+- setup instructions
 - get rid of lein
-- handle reload os sig to reload config (?)
 - prometheus metrics
   - duration
   - target and table as labels
   - column count
   - row count
-- code docs
-- setup instructions
-- support to run as library
+- handle reload os sig to reload config (?)
 - Save creds separate to not conflict with config edits
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
 - allow sheet + range specification
@@ -43,8 +43,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - find spreadsheet-title
 - test.check
 - circle ci
-- use transaction for db
-- github release
 - support mysql
 - support sqlite
 - add column works without conflict
@@ -70,7 +68,7 @@ java 8+
 
 ### Use a library
 
-require `googlesheets-sql-sync.system`
+Use `googlesheets-sql-sync.system` and `googlesheets-sql-sync.web`
 
 
 ## License

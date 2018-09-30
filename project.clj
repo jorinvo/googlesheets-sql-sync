@@ -9,17 +9,16 @@
                  [org.postgresql/postgresql "42.2.4"]
                  [org.clojure/tools.cli "0.3.7"]
                  [cheshire "5.8.0"]
-                 [clj-http "3.9.1"]
+                 [http-kit "2.3.0"]
                  [mount "0.1.13"]
                  [ring/ring-core "1.7.0-RC2"]
-                 [ring/ring-jetty-adapter "1.6.3"]
                  [spootnik/signal "0.2.1"]]
   :main ^:skip-aot googlesheets-sql-sync.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[cljfmt "0.5.1"]
                                   [expound "0.7.1"]]
-                   :source-paths ["src"]}}
+                   :source-paths ["src" "dev"]}}
   :jvm-opts ["-Xmx200m"]
-  :repl-options {:init-ns googlesheets-sql-sync.dev}
+  :repl-options {:init-ns dev}
   :omit-source true)

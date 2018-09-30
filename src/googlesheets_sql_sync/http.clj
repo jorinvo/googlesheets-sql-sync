@@ -1,7 +1,7 @@
 (ns googlesheets-sql-sync.http
   (:refer-clojure :exclude [get])
   (:require
-   [clj-http.client :as http]
+   [org.httpkit.client :as http-client]
    [mount.core :as mount]
    [googlesheets-sql-sync.throttle :as throttle]))
 
@@ -18,8 +18,8 @@
 
 (defn get [msg url req]
   (throttle/wait throttler)
-  (try-http msg #(http/get url req)))
+  (try-http msg #(deref (http-client/get url req))))
 
 (defn post [msg url req]
   (throttle/wait throttler)
-  (try-http msg #(http/post url req)))
+  (try-http msg #(deref (http-client/post url req))))

@@ -1,6 +1,8 @@
 (ns googlesheets-sql-sync.oauth
+  (:import (java.net URI))
   (:require
-   [clj-http.client :refer [generate-query-string parse-url]]
+   [clojure.string :as string]
+   [org.httpkit.client :refer [url-encode]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.http :as http]))
 
@@ -16,18 +18,33 @@
 
 (def defaul-params-refresh {:grant_type "refresh_token"})
 
+(defn- query-string
+  "Returns URL-encoded query string for given params map."
+  [m]
+  (->> m
+       (map (fn [[k v]]  (str (url-encode (name k)) "=" (url-encode v))))
+       (string/join "&")))
+
+(comment
+  (= "a=1&b=2" (query-string {:a 1 :b 2})))
+
 (defn url [c]
-  (->> (select-keys (:google_credentials c) [:client_id :redirect_uri])
-       (merge default-params-user)
-       generate-query-string
-       (str user-oauth-url "?")))
+  (let [q (->> (select-keys (:google_credentials c) [:client_id :redirect_uri])
+               (merge default-params-user)
+               query-string)]
+    (str user-oauth-url "?" q)))
+
+(defn- server-name [s]
+  (.getHost (new URI s)))
+
+(comment
+  (= "localhost" (server-name "http://localhost")))
 
 (defn local-redirect? [cfg]
   (-> cfg
       :google_credentials
       :redirect_uri
-      parse-url
-      :server-name
+      server-name
       (= "localhost")))
 
 (defn- get-access-token [creds params]

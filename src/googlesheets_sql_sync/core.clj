@@ -11,17 +11,17 @@
 
 (def usage "
 
-  Generate a config file using:
+  1. Generate a config file by running:
 
-    java -jar googlesheets_sql_sync.jar <client-id> <client-secret>
+    java -jar googlesheets_sql_sync.jar --init
 
-  Fill out the config file
+  2. Fill out the config file.
 
-  Then run:
+  3. Then run:
 
-    java -jar googlesheets_sql_sync.jar googlesheets_sql_sync.json
+    java -jar googlesheets_sql_sync.jar
 
-  Follow setup instructions
+  4. Follow setup instructions and you are good to go.
 
 ")
 
@@ -66,7 +66,8 @@
   (invalid-flags {}))
 
 (defn- print-usage [{:keys [summary]}]
-  (println usage summary))
+  (println usage)
+  (println summary))
 
 (defn- handle-signals
   "Connect OS signals with system"
