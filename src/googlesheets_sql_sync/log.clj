@@ -1,5 +1,5 @@
 (ns googlesheets-sql-sync.log)
 
-(def info println)
-(def warn println)
-(def error println)
+(def ^:dynamic info println)
+(def ^:dynamic warn println)
+(def ^:dynamic error println)

@@ -22,26 +22,18 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- does sheet-title default to first sheet ?
-- use transaction for db
-- github release
-- code docs
-- setup instructions
-- try boot
 - prometheus metrics
   - duration
   - target and table as labels
   - column count
   - row count
-- Adapt System/exit to work nicely in development
-- add optional has-header-row and add optional headers (which must be set when has-header-row = false)
+- code docs
+- setup instructions
 - allow sheet + range specification
-- refresh token in a smarter way (not every single time)
-- find spreadsheet-title
+- github release
 - circle ci
 - support mysql
 - support sqlite
-- add column works without conflict
 
 
 ## Installation
@@ -65,6 +57,8 @@ java 8+
 ### Use a library
 
 Use `googlesheets-sql-sync.system` and `googlesheets-sql-sync.web`
+
+Overwrite `'#googlesheets-sql-sync.log/println` to disable or modify logging
 
 
 ## License

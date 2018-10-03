@@ -94,7 +94,7 @@
       (:init options) (try (config/generate options)
                            (catch Exception e (do (println (.getMessage e))
                                                   (System/exit 1))))
-      :else           (do (-> (mount/with-args options)
+      :else           (do (-> (mount/with-args (assoc options :sys-exit System/exit))
                               (mount/except (if (:no-server options)
                                               (do (println "Server disabled")
                                                   [#'googlesheets-sql-sync.web/server])

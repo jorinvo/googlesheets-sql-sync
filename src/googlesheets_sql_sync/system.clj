@@ -20,14 +20,14 @@
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [auth-only config-file auth-file no-server timeout>] :as ctx}]
+(defn- do-sync [{:keys [auth-only config-file auth-file no-server timeout> sys-exit] :as ctx}]
   (try
     (let [cfg (config/get config-file)]
       (try
         (if-let [token (oauth/refresh-token ctx)]
           (if auth-only
             (do (log/info "Authentication done")
-                (System/exit 0))
+                (sys-exit 0))
             (do
               (->> (:sheets cfg)
                    (map #(sheets/get-rows % token))
@@ -36,13 +36,13 @@
           (if no-server
             (do
               (log/error "Cannot authenticate when server is disabled")
-              (System/exit 1))
+              (sys-exit 1))
             (show-init-message cfg)))
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (interval/->ms (:interval cfg))))
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
-                           (System/exit 1)))))
+                           (sys-exit 1)))))
 
 (defn- start-worker [{:keys [config-file work>] :as ctx}]
   (log/info "Starting worker")
@@ -67,7 +67,7 @@
       (interval/connect-timeouts ctx)
       (assoc ctx :worker> (start-worker (merge options ctx))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
-                           (System/exit 1)))))
+                           ((:sys-exit options) 1)))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."

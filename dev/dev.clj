@@ -28,6 +28,7 @@
 (def options {:port 9955
               :config-file "googlesheets_sql_sync.json"
               :auth-file "googlesheets_sql_sync.auth.json"
+              :sys-exit #(println "System/exit" %)
               ; :auth-only true
               :oauth-route "/oauth"
               :api-rate-limit 4000})
