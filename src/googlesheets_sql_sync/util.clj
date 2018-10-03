@@ -1,5 +1,5 @@
 (ns googlesheets-sql-sync.util
-  "Collection of utility functions for generic tasks around timing and networking"
+  "Collection of utility functions for generic tasks around timing and networking and files"
   (:import (java.net URI))
   (:require
    [clojure.string :as string]
@@ -32,9 +32,6 @@
 (defn hostname [s]
   (.getHost (new URI s)))
 
-(defn sleep [ms]
-  (Thread/sleep ms))
-
 (defn now []
   (.getTime (java.util.Date.)))
 
@@ -44,3 +41,11 @@
   (let [t (now)]
     (f)
     (cb (- (now) t))))
+
+(defn with-tempfile
+  "Creates a temporary file, calls f with file as argument
+   and deletes file after."
+  [filename ext f]
+  (let [file (java.io.File/createTempFile filename ext)]
+    (f file)
+    (.delete file)))

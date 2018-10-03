@@ -19,16 +19,10 @@
 (s/def ::client_id ::str-not-empty)
 (s/def ::client_secret ::str-not-empty)
 (s/def ::redirect_uri valid-url?)
-(s/def ::access_token ::str-not-empty)
-(s/def ::expires_in pos-int?)
-(s/def ::refresh_token ::str-not-empty)
 
 (s/def ::google_credentials (s/keys :req-un [::client_id
                                              ::client_secret
-                                             ::redirect_uri]
-                                    :opt-un [::access_token
-                                             ::expires_in
-                                             ::refresh_token]))
+                                             ::redirect_uri]))
 
 (s/def ::days nat-int?)
 (s/def ::hours nat-int?)
@@ -62,4 +56,19 @@
   [data]
   (when-not (s/valid? ::config data)
     (throw (Exception. (s/explain-str ::config data))))
+  data)
+
+(s/def ::access_token ::str-not-empty)
+(s/def ::expires_in pos-int?)
+(s/def ::refresh_token ::str-not-empty)
+
+(s/def ::google-auth (s/keys :req-un [::access_token
+                                      ::expires_in
+                                      ::refresh_token]))
+(defn valid-auth
+  "Validates auth data.
+  Throws error containing spec violation."
+  [data]
+  (when-not (s/valid? ::google-auth data)
+    (throw (Exception. (s/explain-str ::google-auth data))))
   data)

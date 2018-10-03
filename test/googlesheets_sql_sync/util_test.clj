@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.util-test
   (:require
    [clojure.test :refer [deftest testing are is]]
+   [clojure.string :as string]
    [googlesheets-sql-sync.util :as util]))
 
 (deftest get-free-port
@@ -35,5 +36,14 @@
 
 (deftest timing
   (util/with-duration
-    #(util/sleep 100)
+    #(Thread/sleep 100)
     #(is (<= 100 % 120))))
+
+(deftest tempfile
+  (util/with-tempfile "myfile" ".txt"
+    (fn [f]
+      (is (string/starts-with? (.getName f) "myfile"))
+      (is (string/ends-with? (.getName f) ".txt"))
+      (is (.exists f))
+      (is (.canRead f))
+      (is (.canWrite f)))))

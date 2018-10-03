@@ -8,8 +8,8 @@
                  [org.clojure/java.jdbc "0.7.8"]
                  [org.postgresql/postgresql "42.2.4"]
                  [org.clojure/tools.cli "0.3.7"]
-                 [cheshire "5.8.0"]
                  [http-kit "2.3.0"]
+                 [metosin/jsonista "0.2.0"]
                  [mount "0.1.13"]
                  [ring/ring-core "1.7.0-RC2"]
                  [spootnik/signal "0.2.1"]]
@@ -18,7 +18,7 @@
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[cljfmt "0.5.1"]
                                   [expound "0.7.1"]]
-                   :source-paths ["src" "dev"]}}
+                   :source-paths ["src" "test" "dev"]}}
   :jvm-opts ["-Xmx200m"]
   :repl-options {:init-ns dev}
   :omit-source true)

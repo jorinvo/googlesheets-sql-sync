@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.throttle
   (:require
-   [googlesheets-sql-sync.util :refer [now sleep]]))
+   [googlesheets-sql-sync.util :refer [now]]))
 
 (defn make [ms]
   {:last-time (atom 0)
@@ -13,7 +13,7 @@
                      (let [t2 (now)
                            diff (- t2 t)]
                        (when (< diff ms)
-                         (sleep (- ms diff)))
+                         (Thread/sleep (- ms diff)))
                        (now)))))
 
 (comment

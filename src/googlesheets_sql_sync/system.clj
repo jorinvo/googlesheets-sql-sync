@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.system
   (:require
-   [clojure.core.async :as async :refer [<!! >!! chan close! dropping-buffer]]
+   [clojure.core.async :as async :refer [<!! >!! chan close! dropping-buffer go-loop]]
    [clojure.java.browse :refer [browse-url]]
    [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
@@ -18,11 +18,11 @@
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [auth-only config-file no-server timeout>]}]
+(defn- do-sync [{:keys [auth-only config-file auth-file no-server timeout>] :as ctx}]
   (try
-    (let [cfg (config/read-file config-file)]
+    (let [cfg (config/get config-file)]
       (try
-        (if-let [token (oauth/refresh-token config-file)]
+        (if-let [token (oauth/refresh-token ctx)]
           (if auth-only
             (do (println "Authentication done")
                 (System/exit 0))
@@ -45,12 +45,12 @@
 (defn- start-worker [{:keys [config-file work>] :as ctx}]
   (println "Starting worker")
   (async/put! work> [:sync])
-  (loop []
+  (go-loop []
     (if-let [[job code] (<!! work>)]
       (do (case job
             :sync (do-sync ctx)
             :code (do
-                    (oauth/handle-code config-file code)
+                    (oauth/handle-code (merge ctx {:code code}))
                     (do-sync ctx)))
           (recur))
       (println "Stopping worker"))))

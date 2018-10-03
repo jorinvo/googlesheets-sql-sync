@@ -13,7 +13,7 @@
         url     (str sheets-url id "/values/" default-sheet-range)
         headers {"Authorization" (str "Bearer " token)}]
     (println "fetching data for" id)
-    (let [resp (http/get "fetch sheet rows" url {:headers headers :as :json})
-          rows (-> resp :body :values)]
+    (let [resp (http/get url {:headers headers})
+          rows (:values resp)]
       {:sheet sheet
        :rows rows})))

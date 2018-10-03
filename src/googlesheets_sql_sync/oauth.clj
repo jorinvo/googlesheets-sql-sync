@@ -32,29 +32,32 @@
 (defn- get-access-token [creds params]
   (let [p (merge (select-keys creds [:client_id :client_secret :redirect_uri])
                  params)]
-    (-> (http/post "fetch access token" server-oauth-url {:form-params p :as :json})
-        :body
+    (-> (http/post server-oauth-url {:form-params p})
         (select-keys [:access_token :expires_in :refresh_token]))))
 
-(defn handle-code [config-file code]
+(defn handle-code
+  [{:keys [code config-file auth-file]}]
   (println "Handling auth code")
   (try
-    (config/merge-in-file
-     config-file
-     :google_credentials
-     #(get-access-token % (merge default-params-code {:code code})))
-    (catch Exception e (println "errror handling code" (.getMessage e)))))
+    (let [creds (:google_credentials (config/get config-file))
+          params (merge default-params-code {:code code})
+          auth (get-access-token creds params)]
+      (config/save-auth auth-file auth))
+    (catch Exception e (println "Errror handling code:" (.getMessage e)))))
 
-(defn refresh-token [config-file]
+(defn refresh-token
+  "Refreshes access token, saves the new one and returns it."
+  [{:keys [config-file auth-file]}]
   (println "Refreshing access token")
-  (if (-> config-file config/read-file :google_credentials :refresh_token)
-    (try (-> (config/merge-in-file
-              config-file
-              :google_credentials
-              (fn [creds]
-                (let [params (merge defaul-params-refresh
-                                    (select-keys creds [:refresh_token]))]
-                  (get-access-token creds params))))
-             :google_credentials :access_token)
-         (catch Exception e (println "errror handling code:" (.getMessage e))))
-    (println "No refresh_token found")))
+  (let [{:keys [refresh_token] :as auth} (config/get-auth auth-file)]
+    (if refresh_token
+      (try
+        (let [creds (:google_credentials (config/get config-file))
+              params (merge defaul-params-refresh
+                            {:refresh_token refresh_token})
+              new-auth (get-access-token creds params)]
+          (config/save-auth auth-file (merge auth new-auth))
+          (:access_token new-auth))
+        (catch Exception e (do (println "Errror handling code:" (.getMessage e))
+                               (println "Please reauthorize app"))))
+      (println "No refresh_token found"))))

@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.config
+  (:refer-clojure :exclude [get])
   (:require
-   [cheshire.core :as json]
+   [jsonista.core :as json]
    [clojure.java.io :as io]
    [googlesheets-sql-sync.spec :as spec]))
 
@@ -20,37 +21,36 @@
               :minutes 30
               :seconds  0}})
 
-(defn- write-file
-  "Validate config and write as JSON to file.
-  Return passed config."
-  [data config-file]
-  (spit
-   config-file
-   (json/generate-string (spec/valid-config data) {:pretty true}))
-  data)
+(defn- write-json
+  "Write data as JSON to file"
+  [file data]
+  (json/write-value (io/file file) data (json/object-mapper {:pretty true})))
 
-(defn read-file
-  "Read config from JSON file and validate it."
+(defn get
+  "Read config from JSON file, validate and return it."
   [config-file]
-  (spec/valid-config (json/parse-string (slurp config-file) true)))
+  (spec/valid-config (json/read-value
+                      (io/file config-file)
+                      (json/object-mapper {:decode-key-fn true}))))
 
 (defn generate
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
-  (when (.exists (io/as-file config-file))
+  (when (.exists (io/file config-file))
     (println "Stopping because file already exists:" config-file)
     (System/exit 1))
   (println "generating" config-file)
-  (write-file (template-config port oauth-route) config-file)
+  (write-json config-file (template-config port oauth-route))
   (println "done"))
 
-(defn merge-in-file
-  "Update value for given key k in config file by applying f to it
-  and write it back to file.
-  Returns resulting config."
-  [config-file k f]
-  ;re-reading config file just in case something changed during token HTTP fetch
-  (println "Updating config file" config-file)
-  (-> (read-file config-file)
-      (update k #(merge % (f %)))
-      (write-file config-file)))
+(defn get-auth
+  "Read auth from JSON file, validate and return it."
+  [auth-file]
+  (let [f (io/file auth-file)]
+    (when (.exists f)
+      (spec/valid-auth (json/read-value f (json/object-mapper {:decode-key-fn true}))))))
+
+(defn save-auth
+  "Validate data and write to auth-file."
+  [auth-file data]
+  (write-json auth-file (spec/valid-auth data)))

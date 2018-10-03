@@ -29,14 +29,14 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 - github release
 - code docs
 - setup instructions
-- get rid of lein
+- try boot
 - prometheus metrics
   - duration
   - target and table as labels
   - column count
   - row count
 - handle reload os sig to reload config (?)
-- Save creds separate to not conflict with config edits
+- Adapt System/exit to work nicely in development
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
 - allow sheet + range specification
 - refresh token in a smarter way (not every single time)

@@ -2,24 +2,25 @@
   (:refer-clojure :exclude [get])
   (:require
    [org.httpkit.client :as http-client]
+   [jsonista.core :as json]
    [mount.core :as mount]
    [googlesheets-sql-sync.throttle :as throttle]))
 
 (mount/defstate throttler
   :start (throttle/make (:api-rate-limit (mount/args))))
 
-(defn- try-http [msg f]
-  (try
-    (f)
-    (catch Exception e
-      (let [d (ex-data e)]
-        (throw (ex-info (str "failed to " msg ": " (:status d) "\n" (:body d))
-                        (select-keys d [:status :body])))))))
+(defn- try-http [f]
+  (let [{:keys [error status body] :as r} @(f)]
+    (when error
+      (throw error))
+    (when (>= status 400)
+      (throw (ex-info (str "bad status: " status "\n" body) r)))
+    (json/read-value body (json/object-mapper {:decode-key-fn true}))))
 
-(defn get [msg url req]
+(defn get [url req]
   (throttle/wait throttler)
-  (try-http msg #(deref (http-client/get url req))))
+  (try-http #(http-client/get url req)))
 
-(defn post [msg url req]
+(defn post [url req]
   (throttle/wait throttler)
-  (try-http msg #(deref (http-client/post url req))))
+  (try-http #(http-client/post url req)))

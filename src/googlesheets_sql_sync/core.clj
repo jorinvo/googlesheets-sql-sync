@@ -32,8 +32,10 @@
     :default 9955
     :parse-fn #(Integer/parseInt %)
     :validate [valid-port? "Must be a number between 0 and 65536"]]
-   ["-c" "--config-file PATH" "Config file path"
+   [nil "--config-file PATH" "Config file path"
     :default "googlesheets_sql_sync.json"]
+   [nil "--auth-file PATH" "File path to store Google auth secrets, file is updated on sync"
+    :default "googlesheets_sql_sync.auth.json"]
    [nil "--oauth-route" "Set URL route path to used in OAuth redirect URL."
     :default "/oauth"]
    [nil "--api-rate-limit" "Max interval calling Google API in ms"
