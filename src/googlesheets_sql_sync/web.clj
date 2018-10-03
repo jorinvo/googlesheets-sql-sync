@@ -4,6 +4,7 @@
    [mount.core :as mount]
    [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
+   [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.system :as system]))
 
 (def not-found
@@ -28,21 +29,21 @@
       (let [params (:params req)]
         (if-let [code (get params "code")]
           (do
-            (println "Got code")
+            (log/info "Got code")
             (async/put! work> [:code code]))
-          (println "Got bad params" params))
+          (log/warn "Got bad params" params))
         ok))))
 
 (defn start
   "Start a web server and return it."
   [{:keys [oauth-route port work>]}]
   (try
-    (println "Starting server")
+    (log/info "Starting server")
     (let [app (wrap-params (make-handler oauth-route work>))
           server (run-server app {:port port
                                   ; For only auth token it's unlikely we need more threads.
                                   :thread 1})]
-      (println "Server listening on port" port)
+      (log/info "Server listening on port" port)
       server)
     (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e)))))))
 

@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.sheets
   (:require
-   [googlesheets-sql-sync.http :as http]))
+   [googlesheets-sql-sync.http :as http]
+   [googlesheets-sql-sync.log :as log]))
 
 (def sheets-url "https://sheets.googleapis.com/v4/spreadsheets/")
 
@@ -12,7 +13,7 @@
   (let [id      (:spreadsheet_id sheet)
         url     (str sheets-url id "/values/" default-sheet-range)
         headers {"Authorization" (str "Bearer " token)}]
-    (println "fetching data for" id)
+    (log/info "Fetching data for" id)
     (let [resp (http/get url {:headers headers})
           rows (:values resp)]
       {:sheet sheet

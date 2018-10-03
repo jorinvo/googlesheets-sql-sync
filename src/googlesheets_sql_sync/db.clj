@@ -1,7 +1,8 @@
 (ns googlesheets-sql-sync.db
   (:require
    [clojure.java.jdbc :as jdbc]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [googlesheets-sql-sync.log :as log]))
 
 (defn- escape
   "Replace all c in text with \\c"
@@ -12,7 +13,7 @@
   (escape "hey \"you\"!" "\""))
 
 (defn- create-table [db headers table]
-  (println "Creating table")
+  (log/info "Creating table")
   (let [cols (->> headers
                   (map #(str % " text"))
                   (string/join ", "))
@@ -25,7 +26,7 @@
   Doing this to keep it DB and permission independent.
   Returns nil if table is empty or does not exist."
   [db table]
-  (println "Getting table headers")
+  (log/info "Getting table headers")
   (let [s (str "select * from \"" (escape table "\"") "\" limit 1")]
     (try
       (-> (jdbc/query db s {:identifiers identity
@@ -33,10 +34,9 @@
           first
           keys)
       (catch java.sql.SQLException e (when-not (.contains
-                                                 (.getMessage e)
-                                                 (str "ERROR: relation \"" table "\" does not exist"))
+                                                (.getMessage e)
+                                                (str "ERROR: relation \"" table "\" does not exist"))
                                        (throw e))))))
-
 
 (comment
   (let [db {:dbtype "postgresql"
@@ -71,11 +71,11 @@
                      :new-headers b}))))
 
 (defn- clear-table [db table]
-  (println "Clearing table")
+  (log/info "Clearing table")
   (jdbc/execute! db (str "truncate table " table)))
 
 (defn- write-rows [db table headers rows]
-  (println "Writing " (count rows) "rows to table")
+  (log/info "Writing " (count rows) "rows to table")
   (jdbc/insert-multi! db table headers rows))
 
 (defn update-table [config sheet]
@@ -93,7 +93,7 @@
                   (map empty-strings->nil)
                   (map #(ensure-size header-count %)))]
     (try
-      (println "Updating table" table)
+      (log/info "Updating table" table)
       (if-let [new-headers (get-headers db table)]
         (check-header-conflicts headers new-headers)
         (create-table db escaped-headers table))

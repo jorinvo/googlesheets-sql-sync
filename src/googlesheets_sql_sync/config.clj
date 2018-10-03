@@ -1,8 +1,9 @@
 (ns googlesheets-sql-sync.config
   (:refer-clojure :exclude [get])
   (:require
-   [jsonista.core :as json]
    [clojure.java.io :as io]
+   [jsonista.core :as json]
+   [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.spec :as spec]))
 
 (defn- template-config [port oauth-route]
@@ -37,11 +38,11 @@
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
   (when (.exists (io/file config-file))
-    (println "Stopping because file already exists:" config-file)
+    (log/error "Stopping because file already exists:" config-file)
     (System/exit 1))
-  (println "Generating" config-file)
+  (log/info "Generating" config-file)
   (write-json config-file (template-config port oauth-route))
-  (println "Done"))
+  (log/info "Done"))
 
 (defn get-auth
   "Read auth from JSON file, validate and return it."

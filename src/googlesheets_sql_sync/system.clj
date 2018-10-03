@@ -6,6 +6,7 @@
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
+   [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]))
 
@@ -14,7 +15,7 @@
   When running locally, open browser automatically."
   [cfg]
   (let [url (oauth/url cfg)]
-    (println "Please visit the oauth url in your browser:\n" url)
+    (log/info "Please visit the oauth url in your browser:\n" url)
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
@@ -24,26 +25,26 @@
       (try
         (if-let [token (oauth/refresh-token ctx)]
           (if auth-only
-            (do (println "Authentication done")
+            (do (log/info "Authentication done")
                 (System/exit 0))
             (do
               (->> (:sheets cfg)
                    (map #(sheets/get-rows % token))
                    (run! #(db/update-table cfg %)))
-              (println "Sync done")))
+              (log/info "Sync done")))
           (if no-server
             (do
-              (println "Cannot authenticate when server is disabled")
+              (log/error "Cannot authenticate when server is disabled")
               (System/exit 1))
             (show-init-message cfg)))
-        (catch Exception e (println (.getMessage e) "\nSync failed")))
-      (println "Next sync in" (interval/->string (:interval cfg)))
+        (catch Exception e (log/error (.getMessage e) "\nSync failed")))
+      (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (interval/->ms (:interval cfg))))
-    (catch Exception e (do (println "Failed reading config file" (.getMessage e))
+    (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            (System/exit 1)))))
 
 (defn- start-worker [{:keys [config-file work>] :as ctx}]
-  (println "Starting worker")
+  (log/info "Starting worker")
   (async/put! work> [:sync])
   (go-loop []
     (if-let [[job code] (<! work>)]
@@ -53,7 +54,7 @@
                     (oauth/handle-code (merge ctx {:code code}))
                     (do-sync ctx)))
           (recur))
-      (println "Stopping worker"))))
+      (log/info "Stopping worker"))))
 
 (defn start
   [options]
@@ -64,13 +65,13 @@
                     :timeout> timeout>}]
       (interval/connect-timeouts ctx)
       (assoc ctx :worker> (start-worker (merge options ctx))))
-    (catch Exception e (do (println "Error while starting:" (.getMessage e))
+    (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            (System/exit 1)))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."
   [{:keys [timeout> work>]}]
-  (println "\nShutting down")
+  (log/info "\nShutting down")
   (when timeout>
     (close! timeout>))
   (when work>
@@ -84,7 +85,7 @@
   []
   (when-let [{:keys [work>]} state]
     (do
-      (println "Sync triggered")
+      (log/info "Sync triggered")
       (>!! work> [:sync]))))
 
 (defn wait
