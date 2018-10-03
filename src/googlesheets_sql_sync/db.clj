@@ -21,19 +21,24 @@
         s (str "create table " table " ( " cols " )")]
     (jdbc/execute! db s)))
 
-(defn- get-headers
+(defn- get-headers-or-drop
   "Get headers of a table from DB.
   Used technique will only work if table is not empty.
-  Doing this to keep it DB and permission independent.
-  Returns nil if table is empty or does not exist."
+  If empty, table is dropped.
+  Doing this to be DB and permission independent.
+  Returns nil if table does not exist."
   [db table]
   (log/info "Getting table headers")
   (let [s (str "select * from \"" (escape table "\"") "\" limit 1")]
     (try
-      (-> (jdbc/query db s {:identifiers identity
-                            :keywordize? false})
-          first
-          keys)
+      (if-let [h (-> (jdbc/query db s {:identifiers identity
+                                       :keywordize? false})
+                     first
+                     keys)]
+        h
+        (do (println "Table is empty, dropping it")
+            (jdbc/execute! db (str "drop table " table))
+            nil))
       (catch java.sql.SQLException e (when-not (.contains
                                                 (.getMessage e)
                                                 (str "ERROR: relation \"" table "\" does not exist"))
@@ -65,11 +70,11 @@
   (= [1 2 nil]
      (ensure-size 3 [1 2])))
 
-(defn- check-header-conflicts [a b]
-  (when (not= a b)
+(defn- check-header-conflicts [new-headers old-headers]
+  (when (not= new-headers old-headers)
     (throw (ex-info (str "Conflicting old and new table headers")
-                    {:old-headers a
-                     :new-headers b}))))
+                    {:new-headers new-headers
+                     :old-headers old-headers}))))
 
 (defn- clear-table [db table]
   (log/info "Clearing table")
@@ -95,10 +100,11 @@
                   (map #(ensure-size header-count %)))]
     (try
       (log/info "Updating table" table)
-      (if-let [new-headers (get-headers db table)]
-        (check-header-conflicts headers new-headers)
+      (if-let [old-headers (get-headers-or-drop db table)]
+        (do
+          (check-header-conflicts headers old-headers)
+          (clear-table db table))
         (create-table db escaped-headers table))
-      (clear-table db table)
       (write-rows db table escaped-headers data)
       sheet
       (catch Exception e (throw-db-err target table e)))))

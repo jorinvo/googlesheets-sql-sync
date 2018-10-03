@@ -22,7 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- Drop table before create if it was empty
 - does sheet-title default to first sheet ?
 - use transaction for db
 - github release
