@@ -2,7 +2,7 @@
   (:require
    [clojure.java.jdbc.spec :as jdbc-spec]
    [clojure.spec.alpha :as s]
-   [googlesheets-sql-sync.util :refer [valid-url?]]))
+   [googlesheets-sql-sync.util :refer [valid-url? fail]]))
 
 (s/def ::str-not-empty (s/and string? not-empty))
 
@@ -55,7 +55,7 @@
   Throws error containing spec violation."
   [data]
   (when-not (s/valid? ::config data)
-    (throw (Exception. (s/explain-str ::config data))))
+    (fail (s/explain-str ::config data)))
   data)
 
 (s/def ::access_token ::str-not-empty)
@@ -70,5 +70,5 @@
   Throws error containing spec violation."
   [data]
   (when-not (s/valid? ::google-auth data)
-    (throw (Exception. (s/explain-str ::google-auth data))))
+    (fail (s/explain-str ::google-auth data)))
   data)

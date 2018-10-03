@@ -2,7 +2,8 @@
   (:require
    [clojure.java.jdbc :as jdbc]
    [clojure.string :as string]
-   [googlesheets-sql-sync.log :as log]))
+   [googlesheets-sql-sync.log :as log]
+   [googlesheets-sql-sync.util :refer [fail]]))
 
 (defn- escape
   "Replace all c in text with \\c"
@@ -46,7 +47,7 @@
     (get-headers db "hi")))
 
 (defn- throw-db-err [target table e]
-  (throw (Exception. (str "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))))
+  (fail "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))
 
 (defn- empty-strings->nil [xs]
   (map #(when-not (= "" %) %) xs))

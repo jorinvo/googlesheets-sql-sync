@@ -5,6 +5,9 @@
    [clojure.string :as string]
    [org.httpkit.client :refer [url-encode]]))
 
+(defn fail [& args]
+  (throw (Exception. (apply str args))))
+
 ; Thanks https://gist.github.com/apeckham/78da0a59076a4b91b1f5acf40a96de69
 (defn get-free-port
   "Let Java find a free port for you."

@@ -5,7 +5,8 @@
    [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
    [googlesheets-sql-sync.log :as log]
-   [googlesheets-sql-sync.system :as system]))
+   [googlesheets-sql-sync.system :as system]
+   [googlesheets-sql-sync.util :refer [fail]]))
 
 (def not-found
   {:status 404
@@ -45,7 +46,7 @@
                                   :thread 1})]
       (log/info "Server listening on port" port)
       server)
-    (catch Exception e (throw (Exception. (str "Failed to start server: " (.getMessage e)))))))
+    (catch Exception e (fail "Failed to start server: " (.getMessage e)))))
 
 (mount/defstate server
   :start (start (merge (mount/args)

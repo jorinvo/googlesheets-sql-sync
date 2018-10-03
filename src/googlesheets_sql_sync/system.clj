@@ -8,7 +8,8 @@
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.oauth :as oauth]
-   [googlesheets-sql-sync.sheets :as sheets]))
+   [googlesheets-sql-sync.sheets :as sheets]
+   [googlesheets-sql-sync.util :refer [fail]]))
 
 (defn- show-init-message
   "Prompt user to visit auth URL.

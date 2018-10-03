@@ -4,6 +4,10 @@
    [clojure.string :as string]
    [googlesheets-sql-sync.util :as util]))
 
+(deftest fail
+  (is (thrown-with-msg? Exception #"oh no!"
+                        (util/fail "oh" " no!"))))
+
 (deftest get-free-port
   (dotimes [_ 10]
     (is (util/valid-port? (util/get-free-port)))))

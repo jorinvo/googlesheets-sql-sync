@@ -4,7 +4,8 @@
    [clojure.java.io :as io]
    [jsonista.core :as json]
    [googlesheets-sql-sync.log :as log]
-   [googlesheets-sql-sync.spec :as spec]))
+   [googlesheets-sql-sync.spec :as spec]
+   [googlesheets-sql-sync.util :refer [fail]]))
 
 (defn- template-config [port oauth-route]
   {:sheets [{:table          "your_sql_table_name"
@@ -38,7 +39,7 @@
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
   (when (.exists (io/file config-file))
-    (throw (Exception. (str "File already exists: " config-file))))
+    (fail "File already exists: " config-file))
   (log/info "Generating" config-file)
   (write-json config-file (template-config port oauth-route))
   (log/info "Done"))
