@@ -2,12 +2,15 @@
   (:require
    [googlesheets-sql-sync.util :refer [now]]))
 
-(defn make [ms]
+(defn make
+  "Create throttler blocking for at a duration of ms."
+  [ms]
   {:last-time (atom 0)
    :ms ms})
 
 (defn wait
-  ""
+  "Wait for passed throttler.
+  Sleeps for left duration when last call to wait is more recent than ms."
   [{:keys [last-time ms] :or {last-time (atom 0) ms 0}}]
   (swap! last-time (fn [t]
                      (let [t2 (now)
@@ -17,6 +20,7 @@
                        (now)))))
 
 (comment
+  (wait nil)
   (let [t (make 1000)]
     (wait t)
     (prn "one")

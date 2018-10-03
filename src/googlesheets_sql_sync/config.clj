@@ -39,9 +39,9 @@
   (when (.exists (io/file config-file))
     (println "Stopping because file already exists:" config-file)
     (System/exit 1))
-  (println "generating" config-file)
+  (println "Generating" config-file)
   (write-json config-file (template-config port oauth-route))
-  (println "done"))
+  (println "Done"))
 
 (defn get-auth
   "Read auth from JSON file, validate and return it."

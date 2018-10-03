@@ -98,4 +98,5 @@
                                                   [#'googlesheets-sql-sync.web/server])
                                               []))
                               (mount/start))
-                          (handle-signals)))))
+                          (handle-signals)
+                          (system/wait)))))

@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.system
   (:require
-   [clojure.core.async :as async :refer [<!! >!! chan close! dropping-buffer go-loop]]
+   [clojure.core.async :as async :refer [<! >!! <!! chan close! dropping-buffer go-loop]]
    [clojure.java.browse :refer [browse-url]]
    [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
@@ -46,7 +46,7 @@
   (println "Starting worker")
   (async/put! work> [:sync])
   (go-loop []
-    (if-let [[job code] (<!! work>)]
+    (if-let [[job code] (<! work>)]
       (do (case job
             :sync (do-sync ctx)
             :code (do
@@ -63,8 +63,7 @@
           ctx      {:work>    work>
                     :timeout> timeout>}]
       (interval/connect-timeouts ctx)
-      (start-worker (merge options ctx))
-      ctx)
+      (assoc ctx :worker> (start-worker (merge options ctx))))
     (catch Exception e (do (println "Error while starting:" (.getMessage e))
                            (System/exit 1)))))
 
@@ -83,6 +82,12 @@
 
 (defn trigger-sync
   []
-  (let [{:keys [work>]} state]
-    (println "Sync triggered")
-    (>!! work> [:sync])))
+  (when-let [{:keys [work>]} state]
+    (do
+      (println "Sync triggered")
+      (>!! work> [:sync]))))
+
+(defn wait
+  []
+  (when-let [{:keys [worker>]} state]
+    (<!! worker>)))
