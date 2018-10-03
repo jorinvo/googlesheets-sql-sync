@@ -34,7 +34,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
   - target and table as labels
   - column count
   - row count
-- handle reload os sig to reload config (?)
 - Adapt System/exit to work nicely in development
 - add optional has-header-row and add optional headers (which must be set when has-header-row = false)
 - allow sheet + range specification

@@ -38,8 +38,7 @@
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
   (when (.exists (io/file config-file))
-    (log/error "Stopping because file already exists:" config-file)
-    (System/exit 1))
+    (throw (Exception. (str "File already exists: " config-file))))
   (log/info "Generating" config-file)
   (write-json config-file (template-config port oauth-route))
   (log/info "Done"))
