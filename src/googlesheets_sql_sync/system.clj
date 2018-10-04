@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.system
   (:require
-   [clojure.core.async :as async :refer [<! >!! <!! chan close! dropping-buffer go-loop]]
+   [clojure.core.async :as async :refer [<! >!! <!! chan close! go-loop]]
    [clojure.java.browse :refer [browse-url]]
    [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
@@ -40,7 +40,7 @@
             (show-init-message cfg)))
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
-      (async/put! timeout> (interval/->ms (:interval cfg))))
+      (async/put! timeout> (:interval cfg)))
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            (sys-exit 1)))))
 
@@ -60,11 +60,10 @@
 (defn start
   [options]
   (try
-    (let [timeout> (chan (dropping-buffer 1))
-          work>    (chan)
+    (let [work>    (chan)
+          timeout> (interval/create-timeout> work> [:sync])
           ctx      {:work>    work>
                     :timeout> timeout>}]
-      (interval/connect-timeouts ctx)
       (assoc ctx :worker> (start-worker (merge options ctx))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            ((:sys-exit options) 1)))))

@@ -14,11 +14,14 @@
   (is (= "" (interval/->string {})))
   (is (= "" (interval/->string nil))))
 
-(deftest timeout-chan
-  (let [a {:timeout> (async/chan) :work> (async/chan)}
-        b (interval/connect-timeouts a)]
+(deftest timeout>
+  (let [x :x
+        out> (async/chan)
+        timeout> (interval/create-timeout> out> x)]
     (with-duration
       (fn []
-        (async/put! (:timeout> a) 1000)
-        (is (= [:sync] (async/<!! (:work> a)))))
-      (fn [t] (is (>= t 1000))))))
+        (async/>!! timeout> {:seconds 0.1})
+        (is (= x (async/<!! out>))))
+      (fn [t] (prn t) (is (< 100 t))))
+    (async/close! timeout>)
+    (is (= nil (async/<!! out>)))))
