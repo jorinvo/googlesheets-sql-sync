@@ -13,7 +13,7 @@
                  [mount "0.1.13"]
                  [ring/ring-core "1.7.0-RC2"]
                  [spootnik/signal "0.2.1"]]
-  :main ^:skip-aot googlesheets-sql-sync.core
+  :main ^:skip-aot googlesheets-sql-sync.cli
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[cljfmt "0.5.1"]

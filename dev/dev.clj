@@ -18,7 +18,7 @@
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]
-   [googlesheets-sql-sync.system :as system]
+   [googlesheets-sql-sync.core :as core]
    [googlesheets-sql-sync.throttle :as throttle]
    [googlesheets-sql-sync.util :as util]
    [googlesheets-sql-sync.web :as web]))

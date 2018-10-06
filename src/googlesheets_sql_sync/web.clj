@@ -5,7 +5,7 @@
    [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
    [googlesheets-sql-sync.log :as log]
-   [googlesheets-sql-sync.system :as system]
+   [googlesheets-sql-sync.core :as core]
    [googlesheets-sql-sync.util :refer [fail]]))
 
 (def not-found
@@ -50,5 +50,5 @@
 
 (mount/defstate server
   :start (start (merge (mount/args)
-                       (select-keys system/state [:work>])))
+                       (select-keys core/state [:work>])))
   :stop (server))

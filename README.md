@@ -22,9 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- move -main to cli instead of core
-- move system to core
-- separate auth-only and no-server into their own functions instead of if statements in current worker
 - Move options validation to core
 - not happy with exposing mount, build system yourself
   - pass throttler explicitly
