@@ -9,12 +9,12 @@
 
 (defn get-rows
   "Fetch a sheet's data from the Google Spreadsheet API"
-  [sheet token]
+  [sheet token throttler]
   (let [id      (:spreadsheet_id sheet)
         url     (str sheets-url id "/values/" default-sheet-range)
         headers {"Authorization" (str "Bearer " token)}]
     (log/info "Fetching data for" id)
-    (let [resp (http/get url {:headers headers})
+    (let [resp (http/get url {:headers headers} throttler)
           rows (:values resp)]
       {:sheet sheet
        :rows rows})))

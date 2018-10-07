@@ -22,9 +22,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- Move options validation to core
 - not happy with exposing mount, build system yourself
-  - pass throttler explicitly
   - build web server from core
   - replace sys-exit with stop, allow passing :not-ok, on stop notify
 - separate core and worker

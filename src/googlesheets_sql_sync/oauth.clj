@@ -30,25 +30,25 @@
       hostname
       (= "localhost")))
 
-(defn- get-access-token [creds params]
+(defn- get-access-token [creds params throttler]
   (let [p (merge (select-keys creds [:client_id :client_secret :redirect_uri])
                  params)]
-    (-> (http/post server-oauth-url {:form-params p})
+    (-> (http/post server-oauth-url {:form-params p} throttler)
         (select-keys [:access_token :expires_in :refresh_token]))))
 
 (defn handle-code
-  [{:keys [code config-file auth-file]}]
+  [{:keys [code config-file auth-file throttler]}]
   (log/info "Handling auth code")
   (try
     (let [creds (:google_credentials (config/get config-file))
           params (merge default-params-code {:code code})
-          auth (get-access-token creds params)]
+          auth (get-access-token creds params throttler)]
       (config/save-auth auth-file auth))
     (catch Exception e (log/error "Errror handling code:" (.getMessage e)))))
 
 (defn refresh-token
   "Refreshes access token, saves the new one and returns it."
-  [{:keys [config-file auth-file]}]
+  [{:keys [config-file auth-file throttler]}]
   (log/info "Refreshing access token")
   (let [{:keys [refresh_token] :as auth} (config/get-auth auth-file)]
     (if refresh_token
@@ -56,7 +56,7 @@
         (let [creds (:google_credentials (config/get config-file))
               params (merge defaul-params-refresh
                             {:refresh_token refresh_token})
-              new-auth (get-access-token creds params)]
+              new-auth (get-access-token creds params throttler)]
           (config/save-auth auth-file (merge auth new-auth))
           (:access_token new-auth))
         (catch Exception e (do (log/error "Errror handling code:" (.getMessage e))

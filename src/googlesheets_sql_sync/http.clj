@@ -6,9 +6,6 @@
    [mount.core :as mount]
    [googlesheets-sql-sync.throttle :as throttle]))
 
-(mount/defstate throttler
-  :start (throttle/make (:api-rate-limit (mount/args))))
-
 (defn- try-http [f]
   (let [{:keys [error status body] :as r} @(f)]
     (when error
@@ -17,10 +14,10 @@
       (throw (ex-info (str "bad status: " status "\n" body) r)))
     (json/read-value body (json/object-mapper {:decode-key-fn true}))))
 
-(defn get [url req]
+(defn get [url req throttler]
   (throttle/wait throttler)
   (try-http #(http-client/get url req)))
 
-(defn post [url req]
+(defn post [url req throttler]
   (throttle/wait throttler)
   (try-http #(http-client/post url req)))

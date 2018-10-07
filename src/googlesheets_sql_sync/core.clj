@@ -9,6 +9,7 @@
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]
+   [googlesheets-sql-sync.throttle :as throttle]
    [googlesheets-sql-sync.util :refer [fail]]))
 
 (defn- show-init-message
@@ -20,14 +21,14 @@
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [config-file auth-file no-server timeout> sys-exit] :as ctx}]
+(defn- do-sync [{:keys [config-file auth-file no-server timeout> sys-exit throttler] :as ctx}]
   (try
     (let [cfg (config/get config-file)]
       (try
         (if-let [token (oauth/refresh-token ctx)]
           (do
             (->> (:sheets cfg)
-                 (map #(sheets/get-rows % token))
+                 (map #(sheets/get-rows % token throttler))
                  (run! #(db/update-table cfg %)))
             (log/info "Sync done"))
           (if no-server
@@ -71,15 +72,17 @@
 (defn start
   [options]
   (try
-    (if (:auth-only options)
-      (let [work> (chan)
-            ctx   {:work> work>}]
-        (assoc ctx :worker> (start-worker-auth-only (merge options ctx))))
-      (let [work>    (chan)
-            timeout> (interval/create-timeout> work> [:sync])
-            ctx      {:work>    work>
-                      :timeout> timeout>}]
-        (assoc ctx :worker> (start-worker (merge options ctx)))))
+    (let [work>     (chan)
+          throttler (throttle/make (:api-rate-limit options))]
+      (if (:auth-only options)
+        (let [ctx {:work>     work>
+                   :throttler throttler}]
+          (assoc ctx :worker> (start-worker-auth-only (merge options ctx))))
+        (let [timeout> (interval/create-timeout> work> [:sync])
+              ctx      {:work>     work>
+                        :timeout>  timeout>
+                        :throttler throttler}]
+          (assoc ctx :worker> (start-worker (merge options ctx))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            ((:sys-exit options) 1)))))
 
