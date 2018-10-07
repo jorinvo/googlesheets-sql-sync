@@ -22,8 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- separate core and worker
-- add core/generate-config
 - separate db and store (sql and logic)
 - rename try-http
 - pass oauth urls via options (for using proxy server etc)
