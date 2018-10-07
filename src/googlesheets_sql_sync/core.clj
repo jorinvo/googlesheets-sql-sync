@@ -10,7 +10,8 @@
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]
    [googlesheets-sql-sync.throttle :as throttle]
-   [googlesheets-sql-sync.util :refer [fail]]))
+   [googlesheets-sql-sync.util :refer [fail]]
+   [googlesheets-sql-sync.web :as web]))
 
 (defn- show-init-message
   "Prompt user to visit auth URL.
@@ -72,24 +73,26 @@
 (defn start
   [options]
   (try
-    (let [work>     (chan)
-          throttler (throttle/make (:api-rate-limit options))]
+    (let [ctx (assoc options
+                     :work>     (chan)
+                     :throttler (throttle/make (:api-rate-limit options)))]
       (if (:auth-only options)
-        (let [ctx {:work>     work>
-                   :throttler throttler}]
-          (assoc ctx :worker> (start-worker-auth-only (merge options ctx))))
-        (let [timeout> (interval/create-timeout> work> [:sync])
-              ctx      {:work>     work>
-                        :timeout>  timeout>
-                        :throttler throttler}]
-          (assoc ctx :worker> (start-worker (merge options ctx))))))
+        (assoc ctx :worker> (start-worker-auth-only ctx))
+        (-> ctx
+            (#(assoc % :timeout> (interval/create-timeout> (:work> %) [:sync])))
+            (#(assoc % :worker> (start-worker %)))
+            (#(if (:no-server %)
+                %
+                (assoc % :stop-server (web/start %)))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            ((:sys-exit options) 1)))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."
-  [{:keys [timeout> work>]}]
+  [{:keys [timeout> work> stop-server]}]
   (log/info "\nShutting down")
+  (when stop-server
+    (stop-server))
   (when timeout>
     (close! timeout>))
   (when work>

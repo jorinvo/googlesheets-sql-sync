@@ -3,7 +3,6 @@
   (:require
    [org.httpkit.client :as http-client]
    [jsonista.core :as json]
-   [mount.core :as mount]
    [googlesheets-sql-sync.throttle :as throttle]))
 
 (defn- try-http [f]

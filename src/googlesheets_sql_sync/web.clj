@@ -1,11 +1,9 @@
 (ns googlesheets-sql-sync.web
   (:require
    [clojure.core.async :as async]
-   [mount.core :as mount]
    [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
    [googlesheets-sql-sync.log :as log]
-   [googlesheets-sql-sync.core :as core]
    [googlesheets-sql-sync.util :refer [fail]]))
 
 (def not-found
@@ -47,8 +45,3 @@
       (log/info "Server listening on port" port)
       server)
     (catch Exception e (fail "Failed to start server: " (.getMessage e)))))
-
-(mount/defstate server
-  :start (start (merge (mount/args)
-                       (select-keys core/state [:work>])))
-  :stop (server))

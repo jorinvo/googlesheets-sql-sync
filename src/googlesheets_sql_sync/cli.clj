@@ -4,7 +4,6 @@
    [clojure.tools.cli :refer [parse-opts]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.core :as core]
-   [googlesheets-sql-sync.web]
    [googlesheets-sql-sync.util :refer [valid-port?]]
    [mount.core :as mount]
    [signal.handler :as signal])
@@ -94,11 +93,6 @@
       (:init options) (try (config/generate options)
                            (catch Exception e (do (println (.getMessage e))
                                                   (System/exit 1))))
-      :else           (do (-> (mount/with-args (assoc options :sys-exit System/exit))
-                              (mount/except (if (:no-server options)
-                                              (do (println "Server disabled")
-                                                  [#'googlesheets-sql-sync.web/server])
-                                              []))
-                              (mount/start))
+      :else           (do (mount/start-with-args (assoc options :sys-exit System/exit))
                           (handle-signals)
                           (core/wait)))))
