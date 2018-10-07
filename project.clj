@@ -10,7 +10,6 @@
                  [org.clojure/tools.cli "0.3.7"]
                  [http-kit "2.3.0"]
                  [metosin/jsonista "0.2.0"]
-                 [mount "0.1.13"]
                  [ring/ring-core "1.7.0-RC2"]
                  [spootnik/signal "0.2.1"]]
   :main ^:skip-aot googlesheets-sql-sync.cli

@@ -10,7 +10,6 @@
    [org.httpkit.client :as http-client]
    [jsonista.core :as json]
    [expound.alpha :as expound]
-   [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
@@ -29,14 +28,22 @@
               :config-file "googlesheets_sql_sync.json"
               :auth-file "googlesheets_sql_sync.auth.json"
               :sys-exit #(println "System/exit" %)
-              ; :no-server true
+              :no-server true
               ; :auth-only true
               :oauth-route "/oauth"
               :api-rate-limit 4000})
 
+(def system)
+
+(defn start []
+  (alter-var-root #'system (constantly (core/start options))))
+
+(defn stop []
+  (alter-var-root #'system #(do (core/stop %) nil)))
+
 (comment
   (config/generate options)
-  (mount/stop)
-  (mount/start-with-args options)
-  (mount/find-all-states)
-  (mount/running-states))
+  (start)
+  (stop)
+  (core/trigger-sync system)
+  (core/wait system))

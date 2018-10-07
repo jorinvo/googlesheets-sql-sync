@@ -5,7 +5,6 @@
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.core :as core]
    [googlesheets-sql-sync.util :refer [valid-port?]]
-   [mount.core :as mount]
    [signal.handler :as signal])
   (:gen-class))
 
@@ -74,17 +73,17 @@
 
 (defn- handle-signals
   "Connect OS signals with system"
-  []
-  (signal/with-handler :term (mount/stop))
-  (signal/with-handler :int (mount/stop))
-  (signal/with-handler :alrm (core/trigger-sync)))
+  [system]
+  (signal/with-handler :term (core/stop system))
+  (signal/with-handler :int (core/stop system))
+  (signal/with-handler :alrm (core/trigger-sync system)))
 
 (defn -main
   "Handles args parsing and does the appropriate action."
   [& args]
-  (let [opts (parse-opts args cli-options)
-        options (:options opts)
-        errs (:errors opts)
+  (let [opts      (parse-opts args cli-options)
+        options   (:options opts)
+        errs      (:errors opts)
         flag-errs (invalid-flags options)]
     (cond
       errs            (do (print-list errs) (System/exit 1))
@@ -93,6 +92,7 @@
       (:init options) (try (config/generate options)
                            (catch Exception e (do (println (.getMessage e))
                                                   (System/exit 1))))
-      :else           (do (mount/start-with-args (assoc options :sys-exit System/exit))
-                          (handle-signals)
-                          (core/wait)))))
+      :else           (let [system (core/start
+                                    (assoc options :sys-exit #(System/exit %)))]
+                        (handle-signals system)
+                        (core/wait system)))))

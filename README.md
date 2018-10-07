@@ -22,9 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Roadmap
 
-- not happy with exposing mount, build system yourself
-  - build web server from core
-  - replace sys-exit with stop, allow passing :not-ok, on stop notify
 - separate core and worker
 - add core/generate-config
 - separate db and store (sql and logic)

@@ -1,8 +1,7 @@
 (ns googlesheets-sql-sync.core
   (:require
-   [clojure.core.async :as async :refer [<! >!! <!! chan close! go-loop]]
+   [clojure.core.async :as async :refer [<! >!! <!! chan close! go go-loop]]
    [clojure.java.browse :refer [browse-url]]
-   [mount.core :as mount]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
@@ -43,19 +42,15 @@
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            (sys-exit 1)))))
 
-(defn- start-worker-auth-only [{:keys [config-file sys-exit work>] :as ctx}]
-  (try
-    (let [cfg (config/get config-file)]
-      (if-let [token (oauth/refresh-token ctx)]
-        (do (log/info "Already authenticated")
-            (sys-exit 0))
-        (do
-          (show-init-message cfg)
-          (when-let [[job code] (<! work>)]
-            (when (= :code job)
-              (oauth/handle-code (merge ctx {:code code})))))))
-    (catch Exception e (do (log/error "Failed authenticating" (.getMessage e))
-                           (sys-exit 1)))))
+(defn- start-worker-auth-only [{:keys [config-file work>] :as ctx}]
+  (let [cfg (config/get config-file)]
+    (if-let [token (oauth/refresh-token ctx)]
+      (log/info "Already authenticated")
+      (go
+        (show-init-message cfg)
+        (when-let [[job code] (<! work>)]
+          (when (= :code job)
+            (oauth/handle-code (merge ctx {:code code}))))))))
 
 (defn- start-worker [{:keys [config-file work>] :as ctx}]
   (log/info "Starting worker")
@@ -80,16 +75,16 @@
         (assoc ctx :worker> (start-worker-auth-only ctx))
         (-> ctx
             (#(assoc % :timeout> (interval/create-timeout> (:work> %) [:sync])))
-            (#(assoc % :worker> (start-worker %)))
             (#(if (:no-server %)
                 %
-                (assoc % :stop-server (web/start %)))))))
+                (assoc % :stop-server (web/start %))))
+            (#(assoc % :worker> (start-worker %))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            ((:sys-exit options) 1)))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."
-  [{:keys [timeout> work> stop-server]}]
+  [{:keys [timeout> work> stop-server] :as ctx}]
   (log/info "\nShutting down")
   (when stop-server
     (stop-server))
@@ -98,18 +93,13 @@
   (when work>
     (close! work>)))
 
-(mount/defstate state
-  :start (start (mount/args))
-  :stop (stop state))
-
 (defn trigger-sync
-  []
-  (when-let [{:keys [work>]} state]
-    (do
-      (log/info "Sync triggered")
-      (>!! work> [:sync]))))
+  [{:keys [work>]}]
+  (when work>
+    (log/info "Sync triggered")
+    (>!! work> [:sync])))
 
 (defn wait
-  []
-  (when-let [{:keys [worker>]} state]
+  [{:keys [worker>]}]
+  (when worker>
     (<!! worker>)))
