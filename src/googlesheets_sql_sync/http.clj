@@ -5,7 +5,7 @@
    [jsonista.core :as json]
    [googlesheets-sql-sync.throttle :as throttle]))
 
-(defn- try-http [f]
+(defn- json-or-throw [f]
   (let [{:keys [error status body] :as r} @(f)]
     (when error
       (throw error))
@@ -15,8 +15,8 @@
 
 (defn get [url req throttler]
   (throttle/wait throttler)
-  (try-http #(http-client/get url req)))
+  (json-or-throw #(http-client/get url req)))
 
 (defn post [url req throttler]
   (throttle/wait throttler)
-  (try-http #(http-client/post url req)))
+  (json-or-throw #(http-client/post url req)))
