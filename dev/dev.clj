@@ -7,6 +7,7 @@
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
    [clojure.string :as string]
+   [cider-nrepl.main :as cider]
    [org.httpkit.client :as http-client]
    [jsonista.core :as json]
    [expound.alpha :as expound]
@@ -23,6 +24,10 @@
    [googlesheets-sql-sync.web :as web]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
+
+(defn -main [& args]
+   (go (cider/init ["cider.nrepl/cider-middleware"]))
+   (clojure.main/repl :init #(in-ns 'dev)))
 
 (def options {:port 9955
               :config-file "googlesheets_sql_sync.json"

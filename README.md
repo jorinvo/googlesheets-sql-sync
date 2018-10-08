@@ -20,7 +20,7 @@ Re-ready the config file from disk is ok. It provides a nice benefit of allowing
 Since syncs don't happen that often and Google Sheets are not that big in size that rewrite tables completely is ok.
 
 
-## Roadmap
+## TODO
 
 - pass oauth urls via options (for using proxy server etc)
 - don't call config from oauth but from worker
@@ -41,7 +41,7 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## Installation
 
-java 8+
+Java 8+
 
 
 ## Usage
@@ -59,9 +59,24 @@ java 8+
 
 ### Use a library
 
-Use `googlesheets-sql-sync.system` and `googlesheets-sql-sync.web`
+Use `googlesheets-sql-sync.core` and `googlesheets-sql-sync.config`
 
 Overwrite `'#googlesheets-sql-sync.log/println` to disable or modify logging
+
+
+## Development
+
+- Make sure you ave [Clojure](https://clojure.org/) 1.9+ installed.
+- `clj -Atest` Run tests
+- `clj -Arun` Run the whole system
+- `clj -Adev` Start in dev mode with [CIDER-nREPL](https://github.com/clojure-emacs/cider-nrepl) and a REPL enabled
+  - Try out comments in [dev namespace](/dev/dev.clj)
+
+
+### Building for production
+
+- Install Leinigen
+- Run `lein uberjar`
 
 
 ## License
