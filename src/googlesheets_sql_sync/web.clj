@@ -4,6 +4,7 @@
    [org.httpkit.server :refer [run-server]]
    [ring.middleware.params :refer [wrap-params]]
    [googlesheets-sql-sync.log :as log]
+   [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.util :refer [fail]]))
 
 (def not-found
@@ -20,25 +21,33 @@
   "Make a request handler that takes code from params
   and writes it to the work> channel.
   Returns handler."
-  [oauth-route work>]
-  (fn [req]
-    (if-not (and (= :get (:request-method req))
-                 (= oauth-route (:uri req)))
+  [{:as ctx :keys [metrics-route oauth-route work>]}]
+  (fn [{:keys [params request-method uri]}]
+    (cond
+      (not= :get request-method)
       not-found
-      (let [params (:params req)]
+
+      (= oauth-route uri)
+      (do
         (if-let [code (get params "code")]
           (do
             (log/info "Got code")
             (async/put! work> [:code code]))
           (log/warn "Got bad params" params))
-        ok))))
+        ok)
+
+      (and (= metrics-route uri) (metrics/enabled? ctx))
+      (metrics/response ctx)
+
+      :else
+      not-found)))
 
 (defn start
   "Start a web server and return it."
-  [{:keys [oauth-route port work>]}]
+  [{:as ctx :keys [port]}]
   (try
     (log/info "Starting server")
-    (let [app (wrap-params (make-handler oauth-route work>))
+    (let [app (wrap-params (make-handler ctx))
           server (run-server app {:port port
                                   ; For only auth token it's unlikely we need more threads.
                                   :thread 1})]

@@ -81,7 +81,7 @@
   (jdbc/execute! db (str "truncate table " table)))
 
 (defn- write-rows [db table headers rows]
-  (log/info "Writing " (count rows) "rows to table")
+  (log/info "Writing" (count rows) "rows to table")
   (jdbc/insert-multi! db table headers rows))
 
 (defn update-table [config sheet]

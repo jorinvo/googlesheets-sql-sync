@@ -16,6 +16,7 @@
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.http :as http]
    [googlesheets-sql-sync.log :as log]
+   [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]
    [googlesheets-sql-sync.core :as core]
@@ -33,9 +34,11 @@
               :config-file "googlesheets_sql_sync.json"
               :auth-file "googlesheets_sql_sync.auth.json"
               :sys-exit #(println "System/exit" %)
-              :no-server true
+              ; :no-server true
+              ; :no-metrics true
               ; :auth-only true
               :oauth-route "/oauth"
+              :metrics-route "/metrics"
               :api-rate-limit 4000})
 
 (def system)

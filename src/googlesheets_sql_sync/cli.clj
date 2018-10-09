@@ -34,15 +34,18 @@
     :default "googlesheets_sql_sync.json"]
    [nil "--auth-file PATH" "File path to store Google auth secrets, file is updated on sync"
     :default "googlesheets_sql_sync.auth.json"]
-   [nil "--oauth-route" "Set URL route path to used in OAuth redirect URL."
+   [nil "--oauth-route" "Set route to use in OAuth redirect URL"
     :default "/oauth"]
+   [nil "--metrics-route" "Set route to serve metrics at"
+    :default "/metrics"]
    [nil "--api-rate-limit" "Max interval calling Google API in ms"
     :default 1000
     :parse-fn #(Integer/parseInt %)
     :validate [pos-int? "Must be a positive integer"]]
    [nil "--init" "Initialize a new config file"]
-   [nil "--auth-only" "Setup authentication, then quit. Don't sync."]
-   [nil "--no-server" "Disable server. Disables authentication and metrics."]
+   [nil "--auth-only" "Setup authentication, then quit, don't sync"]
+   [nil "--no-server" "Disable server, disables authentication and metrics"]
+   [nil "--no-metrics" "Disable metrics"]
    ["-h" "--help"]])
 
 (defn- print-list [errs]

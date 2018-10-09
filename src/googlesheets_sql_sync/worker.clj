@@ -6,6 +6,7 @@
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.log :as log]
+   [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.oauth :as oauth]
    [googlesheets-sql-sync.sheets :as sheets]))
 
@@ -36,6 +37,7 @@
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (:interval cfg)))
+      (metrics/count-sync ctx)
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            (sys-exit 1)))))
 

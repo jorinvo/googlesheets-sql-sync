@@ -5,25 +5,25 @@
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.throttle :as throttle]
    [googlesheets-sql-sync.web :as web]
+   [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.worker :as worker]))
 
 (defn start
   "Build a system from options, start it and return it."
-  [options]
+  [{:as options :keys [api-rate-limit auth-only no-metrics no-server sys-exit]}]
   (try
     (let [ctx (assoc options
                      :work>     (chan)
-                     :throttler (throttle/make (:api-rate-limit options)))]
-      (if (:auth-only options)
+                     :throttler (throttle/make api-rate-limit))]
+      (if auth-only
         (assoc ctx :worker> (worker/auth-only ctx))
         (-> ctx
             (#(assoc % :timeout> (interval/create-timeout> (:work> %) [:sync])))
-            (#(if (:no-server %)
-                %
-                (assoc % :stop-server (web/start %))))
+            (#(if (or no-server no-metrics) % (metrics/init %)))
+            (#(if no-server % (assoc % :stop-server (web/start %))))
             (#(assoc % :worker> (worker/start %))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
-                           ((:sys-exit options) 1)))))
+                           (sys-exit 1)))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."
