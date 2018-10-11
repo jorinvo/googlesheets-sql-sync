@@ -10,7 +10,7 @@
 
 (defn start
   "Build a system from options, start it and return it."
-  [{:as options :keys [api-rate-limit auth-only no-metrics no-server sys-exit]}]
+  [{:as options :keys [api-rate-limit auth-only no-metrics no-server]}]
   (try
     (let [ctx (assoc options
                      :work>     (chan)
@@ -23,11 +23,11 @@
             (#(if no-server % (assoc % :stop-server (web/start %))))
             (#(assoc % :worker> (worker/start %))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
-                           (sys-exit 1)))))
+                           :not-ok))))
 
 (defn stop
   "Stops system. If system is not running, nothing happens."
-  [{:keys [timeout> work> stop-server] :as ctx}]
+  [{:keys [timeout> work> stop-server]}]
   (log/info "\nShutting down")
   (when stop-server
     (stop-server))
@@ -45,6 +45,7 @@
 
 (defn wait
   "Block until system is stopped"
-  [{:keys [worker>]}]
-  (when worker>
-    (<!! worker>)))
+  [{:as ctx :keys [worker>]}]
+  (if worker>
+    (<!! worker>)
+    ctx))

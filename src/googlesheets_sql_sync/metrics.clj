@@ -31,6 +31,4 @@
     (->string ctx))
 
     (enabled? nil)
-    (enabled? (init nil))
-
-    )
+    (enabled? (init nil)))

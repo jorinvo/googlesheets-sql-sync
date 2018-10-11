@@ -19,7 +19,7 @@
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [config-file auth-file no-server timeout> sys-exit throttler] :as ctx}]
+(defn- do-sync [{:keys [config-file no-server timeout> throttler] :as ctx}]
   (try
     (let [cfg (config/get config-file)]
       (try
@@ -32,18 +32,18 @@
           (if no-server
             (do
               (log/error "Cannot authenticate when server is disabled")
-              (sys-exit 1))
+              :not-ok)
             (show-init-message cfg)))
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (:interval cfg)))
-      (metrics/count-sync ctx)
+    (metrics/count-sync ctx)
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
-                           (sys-exit 1)))))
+                           :not-ok))))
 
 (defn auth-only [{:keys [config-file work>] :as ctx}]
   (let [cfg (config/get config-file)]
-    (if-let [token (oauth/refresh-token ctx)]
+    (if (oauth/refresh-token ctx)
       (log/info "Already authenticated")
       (go
         (show-init-message cfg)
@@ -51,15 +51,14 @@
           (when (= :code job)
             (oauth/handle-code (merge ctx {:code code}))))))))
 
-(defn start [{:keys [config-file work>] :as ctx}]
+(defn start [{:keys [work>] :as ctx}]
   (log/info "Starting worker")
   (async/put! work> [:sync])
   (go-loop []
     (if-let [[job code] (<! work>)]
-      (do (case job
-            :sync (do-sync ctx)
-            :code (do
-                    (oauth/handle-code (merge ctx {:code code}))
-                    (do-sync ctx)))
-          (recur))
+      (do (when (= :code job)
+            (oauth/handle-code (merge ctx {:code code})))
+          (if (:not-ok (do-sync ctx))
+            :not-ok
+            (recur)))
       (log/info "Stopping worker"))))

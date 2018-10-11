@@ -22,7 +22,6 @@ Since syncs don't happen that often and Google Sheets are not that big in size t
 
 ## TODO
 
-- pass oauth urls via options (for using proxy server etc)
 - don't call config from oauth but from worker
 - validate public api with pre assertions
 - code docs
@@ -61,16 +60,14 @@ Overwrite `'#googlesheets-sql-sync.log/println` to disable or modify logging
 
 ## Development
 
-- Make sure you ave [Clojure](https://clojure.org/) 1.9+ installed.
-- `clj -Atest` Run tests
-- `clj -Arun` Run the whole system
-- `clj -Adev` Start in dev mode with [CIDER-nREPL](https://github.com/clojure-emacs/cider-nrepl) and a REPL enabled
+- Make sure you ave [Clojure](https://clojure.org/) and [Leinigen](https://leiningen.org/) installed.
+- `lein test` Run tests
+- `lein run` Run the whole system
+- `lein repl` Start in dev mode with REPL enabled
   - Try out comments in [dev namespace](/dev/dev.clj)
-
 
 ### Building for production
 
-- Install Leinigen
 - Run `lein uberjar`
 
 
