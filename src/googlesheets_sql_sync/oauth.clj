@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.oauth
   (:require
    [googlesheets-sql-sync.config :as config]
+   [googlesheets-sql-sync.auth-file :as auth-file]
    [googlesheets-sql-sync.http :as http]
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.util :refer [query-string hostname]]))
@@ -42,14 +43,14 @@
     (let [auth (get-access-token (assoc ctx
                                         :creds  (:google_credentials (config/get config-file))
                                         :params (merge default-params-code {:code code})))]
-      (config/save-auth auth-file auth))
+      (auth-file/save auth-file auth))
     (catch Exception e (log/error "Errror handling code:" (.getMessage e)))))
 
 (defn refresh-token
   "Refreshes access token, saves the new one and returns it."
   [{:as ctx :keys [config-file auth-file]}]
   (log/info "Refreshing access token")
-  (let [{:keys [refresh_token] :as auth} (config/get-auth auth-file)]
+  (let [{:keys [refresh_token] :as auth} (auth-file/get auth-file)]
     (if-not refresh_token
       (log/info "No refresh_token found")
       (try
@@ -57,7 +58,7 @@
                                                 :creds (:google_credentials (config/get config-file))
                                                 :params (merge defaul-params-refresh
                                                                {:refresh_token refresh_token})))]
-          (config/save-auth auth-file (merge auth new-auth))
+          (auth-file/save auth-file (merge auth new-auth))
           (:access_token new-auth))
         (catch Exception e (do (log/error "Errror handling code:" (.getMessage e))
                                (log/info "Please reauthorize app")))))))

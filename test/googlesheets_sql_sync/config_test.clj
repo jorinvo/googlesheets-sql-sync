@@ -13,13 +13,3 @@
                         :oauth-route "/"})
       (is (= "http://localhost:1234/"
              (-> file  config/get :google_credentials :redirect_uri))))))
-
-(deftest auth
-  (util/with-tempfile "auth" ".json"
-    (fn [file]
-      (.delete file)
-      (config/save-auth file {:access_token "abc"
-                              :expires_in 1000
-                              :refresh_token "ghi"})
-      (is (= "abc"
-             (:access_token (config/get-auth file)))))))

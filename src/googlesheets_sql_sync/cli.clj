@@ -4,7 +4,7 @@
    [clojure.tools.cli :refer [parse-opts]]
    [googlesheets-sql-sync.config :as config]
    [googlesheets-sql-sync.core :as core]
-   [googlesheets-sql-sync.util :refer [valid-port? valid-url?]]
+   [googlesheets-sql-sync.options :as options]
    [signal.handler :as signal])
   (:gen-class))
 
@@ -15,60 +15,6 @@ while having the power of all available SQL tooling for further processing.
 
 For more, have a look in the README at https://github.com/jorinvo/googlesheets-sql-sync
 ")
-
-; validate
-; to cli opts
-; defaults
-(comment {:port             {:desc     "Port number"
-                             :default  9955
-                             :validate [valid-port? "Must be an integer between 0 and 65536"]}
-          :config-file      {:desc     "Config file path"
-                             :default  "googlesheets_sql_sync.json"}
-          :auth-file        {:desc     "File path to store Google auth secrets, file is updated on sync"
-                             :default  "googlesheets_sql_sync.auth.json"}
-          :oauth-route      {:desc     "Route to use in OAuth redirect URL"
-                             :default  "/oauth"}
-          :metrics-route    {:desc     "Route to serve metrics at"
-                             :default  "/metrics"}
-          :api-rate-limit   {:desc     "Max interval calling Google API in ms"
-                             :default  1000
-                             :validate [pos-int? "Must be a positive integer"]}
-          :user-oauth-url   {:desc     "URL to prompt user with"
-                             :default  "https://accounts.google.com/o/oauth2/v2/auth"}
-          :server-oauth-url {:desc     "URL to prompt user with"
-                             :default  "https://www.googleapis.com/oauth2/v4/token"}
-          :no-server        {:desc     "Disable server, disables authentication and metrics"
-                             :default  false}})
-
-(def cli-options
-  ;; An option with a required argument
-  [[nil "--port PORT" "Port number"
-    :default 9955
-    :parse-fn #(Integer/parseInt %)
-    :validate [valid-port? "Must be a number between 0 and 65536"]]
-   [nil "--config-file PATH" "Config file path"
-    :default "googlesheets_sql_sync.json"]
-   [nil "--auth-file PATH" "File path to store Google auth secrets, file is updated on sync"
-    :default "googlesheets_sql_sync.auth.json"]
-   [nil "--oauth-route" "Route to use in OAuth redirect URL"
-    :default "/oauth"]
-   [nil "--metrics-route" "Route to serve metrics at"
-    :default "/metrics"]
-   [nil "--api-rate-limit" "Max interval calling Google API in ms"
-    :default 1000
-    :parse-fn #(Integer/parseInt %)
-    :validate [pos-int? "Must be a positive integer"]]
-   [nil "--user-oauth-url" "URL to prompt user with"
-    :default "https://accounts.google.com/o/oauth2/v2/auth"
-    :validate [valid-url? "Must be a valid URL"]]
-   [nil "--server-oauth-url " "URL to prompt user with"
-    :default "https://www.googleapis.com/oauth2/v4/token"
-    :validate [valid-url? "Must be a valid URL"]]
-   [nil "--init" "Initialize a new config file"]
-   [nil "--auth-only" "Setup authentication, then quit, don't sync"]
-   [nil "--no-server" "Disable server, disables authentication and metrics"]
-   [nil "--no-metrics" "Disable metrics"]
-   ["-h" "--help"]])
 
 (defn- print-list [errs]
   (run! println errs))
@@ -106,7 +52,7 @@ For more, have a look in the README at https://github.com/jorinvo/googlesheets-s
 (defn -main
   "Handles args parsing and does the appropriate action."
   [& args]
-  (let [opts      (parse-opts args cli-options)
+  (let [opts      (parse-opts args (options/cli))
         options   (:options opts)
         errs      (:errors opts)
         flag-errs (invalid-flags options)]

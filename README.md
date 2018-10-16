@@ -87,8 +87,9 @@ java -jar googlesheets-sql-sync.jar --help
 
 ### Use as Clojure package
 
-- You can generate a config file with `googlesheets-sql-sync.config/generate`
-- Run the system with `googlesheets-sql-sync.core/start`
+- You can generate a config file with `'#googlesheets-sql-sync.config/generate`
+- Generate and validate options for running the system with `'#googlesheets-sql-sync.options/defaults` and `'#googlesheets-sql-sync.options/validate`
+- Run the system with `'#googlesheets-sql-sync.core/start`
 - Overwrite `'#googlesheets-sql-sync.log/info`, `'#googlesheets-sql-sync.log/warn`, `#googlesheets-sql-sync.log/error` to modify or disable logging.
 
 
@@ -107,11 +108,11 @@ java -jar googlesheets-sql-sync.jar --help
 
 ## TODO
 
-- validate public api with pre assertions
 - transactions for DB
+- github release
+- Upload artifact to clojars
 - add cljdoc badge
 - allow sheet + range specification
-- github release
 - circle ci
 
 

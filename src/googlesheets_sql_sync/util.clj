@@ -2,8 +2,13 @@
   "Collection of utility functions for generic tasks around timing and networking and files"
   (:import (java.net URI))
   (:require
+   [clojure.java.io :as io]
+   [clojure.spec.alpha :as s]
    [clojure.string :as string]
+   [jsonista.core :as json]
    [org.httpkit.client :refer [url-encode]]))
+
+(s/def ::str-not-empty (s/and string? not-empty))
 
 (defn fail [& args]
   (throw (Exception. (apply str args))))
@@ -52,3 +57,14 @@
   (let [file (java.io.File/createTempFile filename ext)]
     (f file)
     (.delete file)))
+
+(defn write-json-file
+  "Write data as JSON to file"
+  [file data]
+  (json/write-value (io/file file) data (json/object-mapper {:pretty true})))
+
+(defn read-json-file
+  "Read data as JSON from file"
+  [file]
+  (json/read-value file (json/object-mapper {:decode-key-fn true})))
+

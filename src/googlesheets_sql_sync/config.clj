@@ -2,10 +2,67 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.java.io :as io]
-   [jsonista.core :as json]
+   [clojure.java.jdbc.spec :as jdbc-spec]
+   [clojure.spec.alpha :as s]
    [googlesheets-sql-sync.log :as log]
-   [googlesheets-sql-sync.spec :as spec]
-   [googlesheets-sql-sync.util :refer [fail]]))
+   [googlesheets-sql-sync.util :as util :refer [fail]]))
+
+(s/def ::table ::util/str-not-empty)
+(s/def ::spreadsheet_id ::util/str-not-empty)
+(s/def ::target ::util/str-not-empty)
+(s/def ::sheets (s/coll-of (s/keys :req-un [::table]
+                                   ::spreadsheet_id
+                                   ::target)))
+
+(s/def ::targets (s/map-of keyword?
+                           ::jdbc-spec/db-spec))
+
+(s/def ::client_id ::util/str-not-empty)
+(s/def ::client_secret ::util/str-not-empty)
+(s/def ::redirect_uri util/valid-url?)
+
+(s/def ::google_credentials (s/keys :req-un [::client_id
+                                             ::client_secret
+                                             ::redirect_uri]))
+
+(s/def ::days nat-int?)
+(s/def ::hours nat-int?)
+(s/def ::minutes nat-int?)
+(s/def ::seconds nat-int?)
+(s/def ::interval (s/and (s/keys :req-un [(or ::days
+                                              ::hours
+                                              ::minutes
+                                              ::seconds)])))
+
+(defn- targets-exist?
+  "Check if targets in sheets actually exist"
+  [{:keys [sheets targets]}]
+  (every? #(targets (keyword (:target %))) sheets))
+
+(comment
+  (= true targets-exist? {:sheets [{:target "a"} {:target "b"}]
+                          :targets {:a 1 :b {}}})
+  (= false (targets-exist? {:sheets [{:target "a"}]
+                            :targets {:b 1}})))
+
+(s/def ::config (s/and (s/keys :req-un [::sheets
+                                        ::targets
+                                        ::google_credentials
+                                        ::interval])
+                       targets-exist?))
+
+(defn- valid
+  "Validates config data.
+  Throws error containing spec violation."
+  [data]
+  (when-not (s/valid? ::config data)
+    (fail (s/explain-str ::config data)))
+  data)
+
+(defn get
+  "Read config from JSON file, validate and return it."
+  [config-file]
+  (valid (util/read-json-file (io/file config-file))))
 
 (defn- template-config [port oauth-route]
   {:sheets [{:table          "your_sql_table_name"
@@ -23,35 +80,11 @@
               :minutes 30
               :seconds  0}})
 
-(defn- write-json
-  "Write data as JSON to file"
-  [file data]
-  (json/write-value (io/file file) data (json/object-mapper {:pretty true})))
-
-(defn get
-  "Read config from JSON file, validate and return it."
-  [config-file]
-  (spec/valid-config (json/read-value
-                      (io/file config-file)
-                      (json/object-mapper {:decode-key-fn true}))))
-
 (defn generate
   "Write config template to a file."
   [{:keys [config-file port oauth-route]}]
   (when (.exists (io/file config-file))
     (fail "File already exists: " config-file))
   (log/info "Generating" config-file)
-  (write-json config-file (template-config port oauth-route))
+  (util/write-json-file config-file (template-config port oauth-route))
   (log/info "Done"))
-
-(defn get-auth
-  "Read auth from JSON file, validate and return it."
-  [auth-file]
-  (let [f (io/file auth-file)]
-    (when (.exists f)
-      (spec/valid-auth (json/read-value f (json/object-mapper {:decode-key-fn true}))))))
-
-(defn save-auth
-  "Validate data and write to auth-file."
-  [auth-file data]
-  (write-json auth-file (spec/valid-auth data)))
