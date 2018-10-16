@@ -1,4 +1,5 @@
 googlesheets_sql_sync.json
+googlesheets_sql_sync.auth.json
 
 /target
 /classes
