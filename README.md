@@ -1,66 +1,100 @@
-# googlesheets-sql-sync
+# Google Sheets to SQL Sync
 
 Keep your SQL database in sync with Google Sheets.
 
 Use this to let users manually insert data using Google Sheets
-while using all available SQL tooling for further processing.
+while having the power of all available SQL tooling for further processing.
 
 SQL uses JDBC and bundles the PostgreSQL driver.
 Additional drivers can be added any time.
-If you sqlite or mysql support open an issue and support can be added in no time.
-
-API requests are limited to one per second.
+If you would like to add support for SQLite, MySQL or any other SQL database, open an issue and it can probably be added in no time.
 
 
 ## Assumptions and simplifications
 
-Sync happen not too frequently.
-So doing them sequentially is ok.
-Re-ready the config file from disk is ok. It provides a nice benefit of allowing changes to the config file while the system is running and the system picks them up automatically.
-Since syncs don't happen that often and Google Sheets are not that big in size that rewrite tables completely is ok.
+To simplify the task of synchronisation, the following assumptions are made:
+
+- Sync happens not too frequently. Think minutes, not milliseconds.
+- Number of tables to sync is not too high. Maybe a hundred but not a million.
+- The Google Sheets are not too big. They might contain a thousand rows but not millions.
+- Headers are mostly stable. It is an exception to rename, add or delete columns.
+
+This allows for a few simplifications in the implementation:
+
+- Do all specified sync tasks in sequence. There is enough time for this.
+- Limit API requests to Google's API to one a second to prevent rate limits as much as possible.
+- Truncate each table on every sync to ensure all changes are applied.
+- Log error when table schema doesn't match headers from sheet and require the user to check error manually. Most likely the user simply drops the table in this case and moves on.
+- Re-read the config file from disk before each sync interval, which allows for adjusting the config while the system is running.
 
 
-## TODO
 
-- don't call config from oauth but from worker
-- validate public api with pre assertions
-- code docs
-- setup instructions
-- allow sheet + range specification
-- github release
-- circle ci
-- support mysql
-- support sqlite
+## Setup
+
+### Installation
+
+1. Make sure you have Java 8+ installed. Check by running `java -version`
+2. Download latest `googlesheets-sql-sync.jar` from [Github](https://github.com/jorinvo/googlesheets-sql-sync/releases).
+
+### Setup Google Application
+
+1. Create a [new Project](https://console.developers.google.com/projectcreate) or work in an existing one
+2. Enable the [Sheets API](https://console.developers.google.com/apis/library/sheets.googleapis.com?q=sheets)
+3. Create a new [OAuth client ID](https://console.developers.google.com/apis/credentials/oauthclient) or use an existing one
+  1. Set _"Application type"_ to _"Web application"_
+  2. Set at least one correct _"Authorized redirect URI"_. To run googlesheets-sql-sync on your local machine with default settings use http://localhost:9955/oauth
+  3. Keep _"Client ID"_ and _"Client secret"_ handy for later
+4. Setup your app's [OAuth consent screen](https://console.developers.google.com/apis/credentials/consent)
 
 
-## Installation
+### Usage
 
-Java 8+
+1. Create an empty config file
+
+```
+java -jar googlesheets-sql-sync.jar --init
+```
+
+2. Now fill out the missing information in the config file.
+  1. User your Google credentials from above.
+  2. Specify at least one target and one sheet using that target.
+  3. You can find more DB options in the [JDBC docs](https://jdbc.postgresql.org/documentation/head/connect.html).
+  4. Name the `table` as you wish for it to appear in your database.
+  5. To get a `spreadsheet_id`, open one of [your Google Sheets](https://docs.google.com/spreadsheets) and copy the part between `/d/` and `/edit` from the URL bar in your Browser.
+  For example, the `spreadsheet_id` for `https://docs.google.com/spreadsheets/d/1q5BNyL7-FnApmkjq45HlKPK-W-pdEmTrtpz0iaHm8p0/edit#gid=0`
+  is `1q5BNyL7-FnApmkjq45HlKPK-W-pdEmTrtpz0iaHm8p0`.
+
+3. Start the program with:
+
+```
+java -jar googlesheets-sql-sync.jar
+```
+
+4. You will be prompted to visit an OAuth URL to authorize and connect your Google Account.
+
+5. After successful authorization, a first sync is triggered
+   and further ones will occur in the specified interval.
 
 
-## Usage
+### Customization
 
-- run init command
-- fill out config json
-- start server
-- visit oauth url and confirm
+The program can be configured using command line flags. To see available options, run:
 
-    java -Xmx100m -Xms30m -jar target/uberjar/googlesheets-sql-sync-0.1.0-standalone.jar googlesheets_sql_sync.json
+```
+java -jar googlesheets-sql-sync.jar --help
+```
 
-    lein repl
 
-    lein uberjar
+### Use as Clojure package
 
-### Use a library
-
-Use `googlesheets-sql-sync.core` and `googlesheets-sql-sync.config`
-
-Overwrite `'#googlesheets-sql-sync.log/println` to disable or modify logging
+- You can generate a config file with `googlesheets-sql-sync.config/generate`
+- Run the system with `googlesheets-sql-sync.core/start`
+- Overwrite `'#googlesheets-sql-sync.log/info`, `'#googlesheets-sql-sync.log/warn`, `#googlesheets-sql-sync.log/error` to modify or disable logging.
 
 
 ## Development
 
-- Make sure you ave [Clojure](https://clojure.org/) and [Leinigen](https://leiningen.org/) installed.
+- Make sure you have [Leinigen](https://leiningen.org/) installed.
 - `lein test` Run tests
 - `lein run` Run the whole system
 - `lein repl` Start in dev mode with REPL enabled
@@ -69,6 +103,17 @@ Overwrite `'#googlesheets-sql-sync.log/println` to disable or modify logging
 ### Building for production
 
 - Run `lein uberjar`
+
+
+## TODO
+
+- validate public api with pre assertions
+- transactions for DB
+- add cljdoc badge
+- allow sheet + range specification
+- github release
+- circle ci
+
 
 
 ## License

@@ -19,7 +19,9 @@
     (when (oauth/local-redirect? cfg)
       (browse-url url))))
 
-(defn- do-sync [{:keys [config-file no-server timeout> throttler] :as ctx}]
+(defn- do-sync
+  "Authenticate, fetch data and update DB"
+  [{:keys [config-file no-server timeout> throttler] :as ctx}]
   (try
     (let [cfg (config/get config-file)]
       (try
@@ -41,7 +43,10 @@
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            :not-ok))))
 
-(defn auth-only [{:keys [config-file work>] :as ctx}]
+(defn auth-only
+  "Authenticate async and exit once done.
+  Returns channel that gets value once done."
+  [{:keys [config-file work>] :as ctx}]
   (let [cfg (config/get config-file)]
     (if (oauth/refresh-token ctx)
       (log/info "Already authenticated")
@@ -51,7 +56,11 @@
           (when (= :code job)
             (oauth/handle-code (merge ctx {:code code}))))))))
 
-(defn start [{:keys [work>] :as ctx}]
+(defn start
+  "Start system.
+  Returns channel that gets value once done.
+  Channel gets :not-ok on failure."
+  [{:keys [work>] :as ctx}]
   (log/info "Starting worker")
   (async/put! work> [:sync])
   (go-loop []

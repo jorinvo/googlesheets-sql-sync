@@ -35,6 +35,7 @@
         (select-keys [:access_token :expires_in :refresh_token]))))
 
 (defn handle-code
+  "Get access token for auth code and update auth file"
   [{:as ctx :keys [code config-file auth-file]}]
   (log/info "Handling auth code")
   (try

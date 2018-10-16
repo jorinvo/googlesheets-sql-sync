@@ -13,10 +13,14 @@
       (throw (ex-info (str "bad status: " status "\n" body) r)))
     (json/read-value body (json/object-mapper {:decode-key-fn true}))))
 
-(defn get [url req throttler]
+(defn get
+  "Get JSON from url or throw error"
+  [url req throttler]
   (throttle/wait throttler)
   (json-or-throw #(http-client/get url req)))
 
-(defn post [url req throttler]
+(defn post
+  "Post as JSON to url or throw error"
+  [url req throttler]
   (throttle/wait throttler)
   (json-or-throw #(http-client/post url req)))

@@ -8,25 +8,20 @@
    [signal.handler :as signal])
   (:gen-class))
 
-(def usage "
+(def usage "Keep your SQL database in sync with Google Sheets.
 
-  1. Generate a config file by running:
+Use this to let users manually insert data using Google Sheets
+while having the power of all available SQL tooling for further processing.
 
-    java -jar googlesheets_sql_sync.jar --init
-
-  2. Fill out the config file.
-
-  3. Then run:
-
-    java -jar googlesheets_sql_sync.jar
-
-  4. Follow setup instructions and you are good to go.
-
+For more, have a look in the README at https://github.com/jorinvo/googlesheets-sql-sync
 ")
 
+; validate
+; to cli opts
+; defaults
 (comment {:port             {:desc     "Port number"
                              :default  9955
-                             :validate [valid-port? "Must be a number between 0 and 65536"]}
+                             :validate [valid-port? "Must be an integer between 0 and 65536"]}
           :config-file      {:desc     "Config file path"
                              :default  "googlesheets_sql_sync.json"}
           :auth-file        {:desc     "File path to store Google auth secrets, file is updated on sync"
