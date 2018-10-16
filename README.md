@@ -1,5 +1,7 @@
 # Google Sheets to SQL Sync
 
+[![Build Status](https://travis-ci.org/jorinvo/googlesheets-sql-sync.svg?branch=master)](https://travis-ci.org/jorinvo/googlesheets-sql-sync)
+
 Keep your SQL database in sync with Google Sheets.
 
 Use this to let users manually insert data using Google Sheets
@@ -113,7 +115,6 @@ java -jar googlesheets-sql-sync.jar --help
 - Upload artifact to clojars
 - add cljdoc badge
 - allow sheet + range specification
-- circle ci
 
 
 
