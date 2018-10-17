@@ -10,9 +10,11 @@
 (s/def ::table ::util/str-not-empty)
 (s/def ::spreadsheet_id ::util/str-not-empty)
 (s/def ::target ::util/str-not-empty)
-(s/def ::sheets (s/coll-of (s/keys :req-un [::table]
-                                   ::spreadsheet_id
-                                   ::target)))
+(s/def ::range ::util/str-not-empty)
+(s/def ::sheets (s/coll-of (s/keys :req-un [::table
+                                            ::spreadsheet_id
+                                            ::target
+                                            ::range])))
 
 (s/def ::targets (s/map-of keyword?
                            ::jdbc-spec/db-spec))
@@ -29,10 +31,10 @@
 (s/def ::hours nat-int?)
 (s/def ::minutes nat-int?)
 (s/def ::seconds nat-int?)
-(s/def ::interval (s/and (s/keys :req-un [(or ::days
-                                              ::hours
-                                              ::minutes
-                                              ::seconds)])))
+(s/def ::interval (s/keys :req-un [(or ::days
+                                       ::hours
+                                       ::minutes
+                                       ::seconds)]))
 
 (defn- targets-exist?
   "Check if targets in sheets actually exist"
@@ -67,7 +69,8 @@
 (defn- template-config [port oauth-route]
   {:sheets [{:table          "your_sql_table_name"
              :spreadsheet_id "COPY AND PAST FROM URL IN BROWSER"
-             :target         "my_target"}]
+             :target         "my_target"
+             :range          "A:ZZ"}]
    :targets {:my_target {:dbtype "postgresql"
                          :dbname "postgres"
                          :host "localhost"

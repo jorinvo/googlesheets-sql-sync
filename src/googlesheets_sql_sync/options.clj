@@ -51,8 +51,8 @@
                         (into {}))]
     (->> opts
          (map (fn [[k v]]
-                (if-let [[validate err] (validators k)]
-                  (when-not (validate v)
+                (if-let [[validator err] (validators k)]
+                  (when-not (validator v)
                     {k err}))))
          (into {})
          (#(if (empty? %) nil %)))))

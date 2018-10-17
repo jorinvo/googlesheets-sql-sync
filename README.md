@@ -63,6 +63,7 @@ java -jar googlesheets-sql-sync.jar --init
   3. You can find more DB options in the [JDBC docs](https://jdbc.postgresql.org/documentation/head/connect.html).
   4. Name the `table` as you wish for it to appear in your database.
   5. To get a `spreadsheet_id`, open one of [your Google Sheets](https://docs.google.com/spreadsheets) and copy the part between `/d/` and `/edit` from the URL bar in your Browser.
+  6. Specify the `range` using the `A1:Z10`. Skip the number to select all rows - like `A:ZZ`. You can also specify a _sheet_ if your spreadsheet contains multiple sheets by prefixing th range like `SomeSheet!A:ZZ`.
   For example, the `spreadsheet_id` for `https://docs.google.com/spreadsheets/d/1q5BNyL7-FnApmkjq45HlKPK-W-pdEmTrtpz0iaHm8p0/edit#gid=0`
   is `1q5BNyL7-FnApmkjq45HlKPK-W-pdEmTrtpz0iaHm8p0`.
 
@@ -114,7 +115,6 @@ java -jar googlesheets-sql-sync.jar --help
 - github release
 - Upload artifact to clojars
 - add cljdoc badge
-- allow sheet + range specification
 
 
 
