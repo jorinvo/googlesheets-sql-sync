@@ -15,7 +15,7 @@
   "Convert metrics to readable string"
   [{:keys [::sync-counter]}]
   (str
-    "# HELP googlesheets_sql_sync_count The total number of syncs completed.\n"
+    "# HELP googlesheets_sql_sync_count The total number of syncs successfully completed.\n"
     "# TYPE googlesheets_sql_sync_count counter\n"
     (format "googlesheets_sql_sync_count %d\n" @sync-counter)))
 

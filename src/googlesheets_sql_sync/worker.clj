@@ -30,7 +30,8 @@
             (->> (:sheets cfg)
                  (map #(sheets/get-rows % token throttler))
                  (run! #(db/update-table cfg %)))
-            (log/info "Sync done"))
+            (log/info "Sync done")
+            (metrics/count-sync ctx))
           (if no-server
             (do
               (log/error "Cannot authenticate when server is disabled")
@@ -39,7 +40,6 @@
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (:interval cfg)))
-    (metrics/count-sync ctx)
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            :not-ok))))
 
