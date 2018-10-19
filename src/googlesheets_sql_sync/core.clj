@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.core
   (:require
-   [clojure.core.async :refer [>!! <!! chan close!]]
+   [clojure.core.async :refer [>!! <! <!! chan close! go]]
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.throttle :as throttle]
@@ -16,7 +16,11 @@
                      :work>     (chan)
                      :throttler (throttle/make api-rate-limit))]
       (if auth-only
-        (assoc ctx :worker> (worker/auth-only ctx))
+        (-> ctx
+            (#(if no-server % (assoc % :stop-server (web/start %))))
+            (#(assoc % :worker> (go (when-let [c (worker/auth-only ctx)]
+                                      (<! c))
+                                    ((:stop-server %))))))
         (-> ctx
             (#(assoc % :timeout> (interval/create-timeout> (:work> %) [:sync])))
             (#(if (or no-server no-metrics) % (metrics/init %)))

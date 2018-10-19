@@ -13,15 +13,15 @@
 (defn- show-init-message
   "Prompt user to visit auth URL.
   When running locally, open browser automatically."
-  [cfg]
-  (let [url (oauth/url cfg)]
+  [google_credentials user-oauth-url]
+  (let [url (oauth/url google_credentials user-oauth-url)]
     (log/info "Please visit the oauth url in your browser:\n" url)
-    (when (oauth/local-redirect? cfg)
+    (when (oauth/local-redirect? google_credentials)
       (browse-url url))))
 
 (defn- do-sync
   "Authenticate, fetch data and update DB"
-  [{:keys [config-file no-server timeout> throttler] :as ctx}]
+  [{:keys [config-file no-server timeout> throttler user-oauth-url] :as ctx}]
   (try
     (let [cfg (config/get config-file)]
       (try
@@ -35,7 +35,7 @@
             (do
               (log/error "Cannot authenticate when server is disabled")
               :not-ok)
-            (show-init-message cfg)))
+            (show-init-message (:google_credentials cfg) user-oauth-url)))
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
       (log/info "Next sync in" (interval/->string (:interval cfg)))
       (async/put! timeout> (:interval cfg)))
@@ -46,15 +46,16 @@
 (defn auth-only
   "Authenticate async and exit once done.
   Returns channel that gets value once done."
-  [{:keys [config-file work>] :as ctx}]
+  [{:keys [config-file user-oauth-url work>] :as ctx}]
   (let [cfg (config/get config-file)]
     (if (oauth/refresh-token ctx)
       (log/info "Already authenticated")
       (go
-        (show-init-message cfg)
+        (show-init-message (:google_credentials cfg) user-oauth-url)
         (when-let [[job code] (<! work>)]
           (when (= :code job)
-            (oauth/handle-code (merge ctx {:code code}))))))))
+            (oauth/handle-code (merge ctx {:code code}))))
+        (log/info "Authentication done")))))
 
 (defn start
   "Start system.

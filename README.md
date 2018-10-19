@@ -42,11 +42,12 @@ This allows for a few simplifications in the implementation:
 
 1. Create a [new Project](https://console.developers.google.com/projectcreate) or work in an existing one
 2. Enable the [Sheets API](https://console.developers.google.com/apis/library/sheets.googleapis.com?q=sheets)
-3. Create a new [OAuth client ID](https://console.developers.google.com/apis/credentials/oauthclient) or use an existing one
+3. Setup your app's [OAuth consent screen](https://console.developers.google.com/apis/credentials/consent)
+   If this is an organisation-internal service, you most likely want to set it as *internal* and select the *scope* `spreadsheets.readonly`.
+4. Create a new [OAuth client ID](https://console.developers.google.com/apis/credentials/oauthclient) or use an existing one
   1. Set _"Application type"_ to _"Web application"_
   2. Set at least one correct _"Authorized redirect URI"_. To run googlesheets-sql-sync on your local machine with default settings use http://localhost:9955/oauth
   3. Keep _"Client ID"_ and _"Client secret"_ handy for later
-4. Setup your app's [OAuth consent screen](https://console.developers.google.com/apis/credentials/consent)
 
 
 ### Usage
@@ -58,7 +59,7 @@ java -jar googlesheets-sql-sync.jar --init
 ```
 
 2. Now fill out the missing information in the config file.
-  1. User your Google credentials from above.
+  1. Use your Google credentials from above.
   2. Specify at least one target and one sheet using that target.
   3. You can find more DB options in the [JDBC docs](https://jdbc.postgresql.org/documentation/head/connect.html).
   4. Name the `table` as you wish for it to appear in your database.
@@ -79,6 +80,12 @@ java -jar googlesheets-sql-sync.jar
    and further ones will occur in the specified interval.
 
 
+### Running without Server
+
+Often you don't want to open up another port just for OAuth of a small sync tool.
+To work around this you can run `java -jar googlesheets-sql-sync.jar --auth-only` on your local machine, then copy the generated `googlesheets_sql_sync.auth.json` file to your server and on the server run `java -jar googlesheets-sql-sync.jar --no-server`
+
+
 ### Customization
 
 The program can be configured using command line flags. To see available options, run:
@@ -86,6 +93,11 @@ The program can be configured using command line flags. To see available options
 ```
 java -jar googlesheets-sql-sync.jar --help
 ```
+
+
+### Pitfalls
+
+- When you authenticate a Google OAuth app, then throw away your `.auth.json` file and try to re-authenticate, Google for some reason will only send you `access_token` and `expires_in`, no `refresh_token`. To fix this go to https://myaccount.google.com/permissions remove the app's permission and try again.
 
 
 ### Use as Clojure package

@@ -16,15 +16,14 @@
 
 (def defaul-params-refresh {:grant_type "refresh_token"})
 
-(defn url [{:keys [user-oauth-url config]}]
-  (let [q (->> (select-keys (:google_credentials config) [:client_id :redirect_uri])
+(defn url [google_credentials user-oauth-url]
+  (let [q (->> (select-keys google_credentials [:client_id :redirect_uri])
                (merge default-params-user)
                query-string)]
     (str user-oauth-url "?" q)))
 
-(defn local-redirect? [cfg]
-  (-> cfg
-      :google_credentials
+(defn local-redirect? [google_credentials]
+  (-> google_credentials
       :redirect_uri
       hostname
       (= "localhost")))
