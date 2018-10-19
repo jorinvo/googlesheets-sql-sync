@@ -1,6 +1,7 @@
 (ns googlesheets-sql-sync.options
   (:require
-   [googlesheets-sql-sync.util :refer [valid-port? valid-url?]]))
+    [clojure.string :as string]
+    [googlesheets-sql-sync.util :refer [valid-port? valid-url?]]))
 
 (def settings [:port             {:desc     "Port number"
                                   :default  9955
@@ -34,7 +35,10 @@
       ["-h" "--help" "Print help"]]
      (map (fn [[k v]]
             (vec (apply concat
-                        [nil (str "--" (name k)) (:desc v)]
+                        (let [value (when (:default v)
+                                      (str " " (string/upper-case (name k))))
+                              flag (str "--" (name k) value)]
+                          [nil flag (:desc v)])
                         (dissoc v :desc))))
           (partition 2 settings)))))
 
