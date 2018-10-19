@@ -22,6 +22,8 @@
   and writes it to the work> channel.
   Returns handler."
   [{:as ctx :keys [metrics-route oauth-route work>]}]
+  (log/info "Waiting for oauth codes at" oauth-route)
+  (log/info "Serving metrics at" metrics-route)
   (fn [{:keys [params request-method uri]}]
     (cond
       (not= :get request-method)
