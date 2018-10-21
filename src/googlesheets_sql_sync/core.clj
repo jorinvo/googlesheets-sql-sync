@@ -16,15 +16,24 @@
                      :work>     (chan)
                      :throttler (throttle/make api-rate-limit))]
       (if auth-only
-        (-> ctx
-            (#(if no-server % (assoc % :stop-server (web/start %))))
-            (#(assoc % :worker> (go (when-let [c (worker/auth-only ctx)]
-                                      (<! c))
-                                    ((:stop-server %))))))
-        (-> ctx
-            (#(assoc % :timeout> (interval/create-timeout> (:work> %) [:sync])))
-            (#(if (or no-server no-metrics) % (metrics/init %)))
-            (#(if no-server % (assoc % :stop-server (web/start %))))
+        (let [stop-server (web/start ctx)]
+          (assoc ctx
+               :stop-server stop-server
+               :worker> (go (when-let [c (worker/auth-only ctx)]
+                              (<! c))
+                            (stop-server))))
+        (cond-> ctx
+            true
+            (assoc :timeout>
+                   (interval/create-timeout> (:work> ctx) [:sync]))
+
+            (not (or no-server no-metrics))
+            (metrics/init)
+
+            (not no-server)
+            (#(assoc % :stop-server (web/start %)))
+
+            true
             (#(assoc % :worker> (worker/start %))))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            :not-ok))))
