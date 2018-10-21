@@ -123,8 +123,6 @@ java -jar googlesheets-sql-sync.jar --help
 
 ## TODO
 
-- transactions for DB
-- github release
 - Upload artifact to clojars
 - add cljdoc badge
 

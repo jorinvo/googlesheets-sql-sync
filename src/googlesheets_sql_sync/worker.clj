@@ -27,9 +27,9 @@
       (try
         (if-let [token (oauth/refresh-token ctx)]
           (do
-            (->> (:sheets cfg)
-                 (map #(sheets/get-rows % token throttler))
-                 (run! #(db/update-table cfg %)))
+            (run! #(let [sheet (sheets/get-rows % token throttler)]
+                     (db/update-table cfg sheet))
+                  (:sheets cfg))
             (log/info "Sync done")
             (metrics/count-sync ctx))
           (if no-server

@@ -100,11 +100,12 @@
                   (map #(ensure-size header-count %)))]
     (try
       (log/info "Updating table" table)
-      (if-let [old-headers (get-headers-or-drop db table)]
-        (do
-          (check-header-conflicts headers old-headers)
-          (clear-table db table))
-        (create-table db escaped-headers table))
-      (write-rows db table escaped-headers data)
-      sheet
-      (catch Exception e (throw-db-err target table e)))))
+      (jdbc/with-db-transaction [conn db]
+        (if-let [old-headers (get-headers-or-drop conn table)]
+          (do
+            (check-header-conflicts headers old-headers)
+            (clear-table conn table))
+          (create-table conn escaped-headers table))
+        (write-rows conn table escaped-headers data))
+      (catch Exception e (throw-db-err target table e))))
+  sheet)
