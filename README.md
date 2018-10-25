@@ -1,6 +1,8 @@
 # Google Sheets to SQL Sync
 
 [![Build Status](https://travis-ci.org/jorinvo/googlesheets-sql-sync.svg?branch=master)](https://travis-ci.org/jorinvo/googlesheets-sql-sync)
+[![cljdoc badge](https://cljdoc.org/badge/googlesheets-sql-sync/googlesheets-sql-sync)](https://cljdoc.org/d/googlesheets-sql-sync/googlesheets-sql-sync/CURRENT)
+[![Clojars Project](https://img.shields.io/clojars/v/googlesheets-sql-sync.svg)](https://clojars.org/googlesheets-sql-sync)
 
 Keep your SQL database in sync with Google Sheets.
 
@@ -119,13 +121,6 @@ java -jar googlesheets-sql-sync.jar --help
 ### Building for production
 
 - Run `lein uberjar`
-
-
-## TODO
-
-- Upload artifact to clojars
-- add cljdoc badge
-
 
 
 ## License
