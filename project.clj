@@ -1,4 +1,4 @@
-(defproject googlesheets-sql-sync "0.4.1"
+(defproject googlesheets-sql-sync "0.4.2"
   :description "Keep your SQL database in sync with Google Sheets"
   :url "https://github.com/jorinvo/googlesheets-sql-sync"
   :license {:name "MIT"
@@ -12,7 +12,7 @@
                  [metosin/jsonista "0.2.0"]
                  [ring/ring-core "1.7.0-RC2"]
                  [spootnik/signal "0.2.1"]]
-  :main ^:skip-aot googlesheets-sql-sync.cli
+  :main googlesheets-sql-sync.cli
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[cljfmt "0.5.1"]
