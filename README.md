@@ -4,7 +4,7 @@
 [![cljdoc badge](https://cljdoc.org/badge/googlesheets-sql-sync/googlesheets-sql-sync)](https://cljdoc.org/d/googlesheets-sql-sync/googlesheets-sql-sync/CURRENT)
 [![Clojars Project](https://img.shields.io/clojars/v/googlesheets-sql-sync.svg)](https://clojars.org/googlesheets-sql-sync)
 
-Keep your SQL database in sync with Google Sheets with [googlesheets-sql-sync](https://github.com/jorinvo/googlesheets-sql-sync).
+Keep your SQL database in sync with Google Sheets using [googlesheets-sql-sync](https://github.com/jorinvo/googlesheets-sql-sync).
 
 Let users manually insert data using Google Sheets while having the power of all available SQL tooling for further processing.
 
