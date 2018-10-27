@@ -116,7 +116,7 @@ java -jar googlesheets-sql-sync.jar --help
 - `lein test` Run tests
 - `lein run` Run the whole system
 - `lein repl` Start in dev mode with REPL enabled
-  - Try out comments in [dev namespace](/dev/dev.clj)
+  - Try out comments in [dev namespace](https://github.com/jorinvo/googlesheets-sql-sync/blob/master/dev/dev.clj)
 
 ### Building for production
 
@@ -125,5 +125,4 @@ java -jar googlesheets-sql-sync.jar --help
 
 ## License
 
-[MIT](./LICENSE)
-
+[MIT](https://github.com/jorinvo/googlesheets-sql-sync/blob/master/LICENSE)
