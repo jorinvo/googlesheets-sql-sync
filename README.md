@@ -4,12 +4,11 @@
 [![cljdoc badge](https://cljdoc.org/badge/googlesheets-sql-sync/googlesheets-sql-sync)](https://cljdoc.org/d/googlesheets-sql-sync/googlesheets-sql-sync/CURRENT)
 [![Clojars Project](https://img.shields.io/clojars/v/googlesheets-sql-sync.svg)](https://clojars.org/googlesheets-sql-sync)
 
-Keep your SQL database in sync with Google Sheets.
+Keep your SQL database in sync with Google Sheets with [googlesheets-sql-sync](https://github.com/jorinvo/googlesheets-sql-sync).
 
-Use this to let users manually insert data using Google Sheets
-while having the power of all available SQL tooling for further processing.
+Let users manually insert data using Google Sheets while having the power of all available SQL tooling for further processing.
 
-SQL uses JDBC and bundles the PostgreSQL driver.
+googlesheets-sql-sync uses [JDBC](https://github.com/clojure/java.jdbc) and bundles the PostgreSQL driver.
 Additional drivers can be added any time.
 If you would like to add support for SQLite, MySQL or any other SQL database, open an issue and it can probably be added in no time.
 
@@ -100,6 +99,9 @@ java -jar googlesheets-sql-sync.jar --help
 ### Pitfalls
 
 - When you authenticate a Google OAuth app, then throw away your `.auth.json` file and try to re-authenticate, Google for some reason will only send you `access_token` and `expires_in`, no `refresh_token`. To fix this go to https://myaccount.google.com/permissions remove the app's permission and try again.
+
+
+Let me know if you run into any [issues](https://github.com/jorinvo/googlesheets-sql-sync/issues) or if you have any suggestions for improvements.
 
 
 ### Use as Clojure package
