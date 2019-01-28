@@ -71,7 +71,7 @@
      (ensure-size 3 [1 2])))
 
 (defn- check-header-conflicts [new-headers old-headers]
-  (when (not= new-headers old-headers)
+  (when (not= (sort new-headers) (sort old-headers))
     (throw (ex-info (str "Conflicting old and new table headers\nold: " (string/join ", " old-headers) "\nnew: " (string/join ", " new-headers))
                     {:new-headers new-headers
                      :old-headers old-headers}))))
