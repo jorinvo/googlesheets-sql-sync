@@ -29,14 +29,14 @@
   Returns nil if table does not exist."
   [db table]
   (log/info "Getting table headers")
-  (let [s (str "select * from \"" (escape table "\"") "\" limit 1")]
+  (let [s (str "select * from " table " limit 1")]
     (try
       (if-let [h (-> (jdbc/query db s {:identifiers identity
                                        :keywordize? false})
                      first
                      keys)]
         h
-        (do (println "Table is empty, dropping it")
+        (do (log/info "Table is empty, dropping it")
             (jdbc/execute! db (str "drop table " table))
             nil))
       (catch java.sql.SQLException e (when-not (.contains
