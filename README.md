@@ -8,9 +8,9 @@ Keep your SQL database in sync with Google Sheets using [googlesheets-sql-sync](
 
 Let users manually insert data using Google Sheets while having the power of all available SQL tooling for further processing.
 
-googlesheets-sql-sync uses [JDBC](https://github.com/clojure/java.jdbc) and bundles the PostgreSQL driver.
+googlesheets-sql-sync uses [JDBC](https://github.com/clojure/java.jdbc) and bundles the PostgreSQL and MySQL drivers.
 Additional drivers can be added any time.
-If you would like to add support for SQLite, MySQL or any other SQL database, open an issue and it can probably be added in no time.
+If you would like to add support for SQLite or any other SQL database, open an issue and it can probably be added in no time.
 
 
 ## Assumptions and simplifications
@@ -62,7 +62,7 @@ java -jar googlesheets-sql-sync.jar --init
 2. Now fill out the missing information in the config file.
   1. Use your Google credentials from above.
   2. Specify at least one target and one sheet using that target.
-  3. You can find more DB options in the [JDBC docs](https://jdbc.postgresql.org/documentation/head/connect.html).
+  3. You can find more DB options in the JDBC docs for [PostgreSQL](https://jdbc.postgresql.org/documentation/head/connect.html) or [MySQL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-configuration-properties.html).
   4. Name the `table` as you wish for it to appear in your database.
   5. To get a `spreadsheet_id`, open one of [your Google Sheets](https://docs.google.com/spreadsheets) and copy the part between `/d/` and `/edit` from the URL bar in your Browser.
   6. Specify the `range` using the `A1:Z10`. Skip the number to select all rows - like `A:ZZ`. You can also specify a _sheet_ if your spreadsheet contains multiple sheets by prefixing th range like `SomeSheet!A:ZZ`.

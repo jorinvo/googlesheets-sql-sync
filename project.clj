@@ -1,4 +1,4 @@
-(defproject googlesheets-sql-sync "0.4.10"
+(defproject googlesheets-sql-sync "0.5.0"
   :description "Keep your SQL database in sync with Google Sheets"
   :url "https://github.com/jorinvo/googlesheets-sql-sync"
   :license {:name "MIT"
@@ -7,6 +7,7 @@
                  [org.clojure/core.async "0.4.474"]
                  [org.clojure/java.jdbc "0.7.8"]
                  [org.postgresql/postgresql "42.2.4"]
+                 [mysql/mysql-connector-java "8.0.18"]
                  [org.clojure/tools.cli "0.3.7"]
                  [http-kit "2.3.0"]
                  [metosin/jsonista "0.2.0"]
