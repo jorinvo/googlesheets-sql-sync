@@ -5,6 +5,10 @@
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.util :refer [fail]]))
 
+(def identifier-quoting-map
+  {:postgresql "\""
+   :mysql "`"})
+
 (defn- escape
   "Replace all c in text with \\c"
   [text c]
@@ -87,12 +91,13 @@
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
         db (get-in config [:targets (keyword target)])
+        identifier-quoting (:dbtype identifier-quoting-map)
         table (-> sheet :sheet :table)
         rows (:rows sheet)
         headers (->> rows
                      first
-                     (map #(escape % "\"")))
-        escaped-headers (map #(str "\"" % "\"") headers)
+                     (map #(escape % identifier-quoting)))
+        escaped-headers (map #(str identifier-quoting % identifier-quoting) headers)
         header-count (count headers)
         data (->> (rest rows)
                   (map #(map string/trim %))
