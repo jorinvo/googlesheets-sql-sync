@@ -43,10 +43,7 @@
         (do (log/info "Table is empty, dropping it")
             (jdbc/execute! db (str "drop table " table))
             nil))
-      (catch java.sql.SQLException e (when-not (.contains
-                                                (.getMessage e)
-                                                (str "ERROR: relation \"" table "\" does not exist"))
-                                       (throw e))))))
+      (catch java.sql.SQLException _))))
 
 (comment
   (let [db {:dbtype "postgresql"
@@ -91,7 +88,7 @@
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
         db (get-in config [:targets (keyword target)])
-        identifier-quoting (:dbtype identifier-quoting-map)
+        identifier-quoting (identifier-quoting-map (keyword (:dbtype db)))
         table (-> sheet :sheet :table)
         rows (:rows sheet)
         headers (->> rows
