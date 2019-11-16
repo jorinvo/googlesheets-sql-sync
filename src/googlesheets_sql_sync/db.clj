@@ -17,12 +17,12 @@
 (comment
   (escape "hey \"you\"!" "\""))
 
-(defn- create-table [db headers table]
+(defn- create-table [db headers table is-mysql]
   (log/info "Creating table")
   (let [cols (->> headers
                   (map #(str % " text"))
                   (string/join ", "))
-        s (str "create table " table " ( " cols " )")]
+        s (str "create table " table " ( " cols " )" (when is-mysql " character set=utf8mb4"))]
     (jdbc/execute! db s)))
 
 (defn- get-headers-or-drop
@@ -85,10 +85,20 @@
   (log/info "Writing" (count rows) "rows to table")
   (jdbc/insert-multi! db table headers rows))
 
+(defn- get-db-config [config target]
+  (let [db (get-in config [:targets (keyword target)])
+        dbtype (keyword (:dbtype db))]
+    (if (= dbtype :mysql)
+      (merge {"useUnicode" "yes"
+              "characterEncoding" "UTF-8"}
+             db)
+      db)))
+
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
-        db (get-in config [:targets (keyword target)])
-        identifier-quoting (identifier-quoting-map (keyword (:dbtype db)))
+        db (get-db-config config target)
+        dbtype (keyword (:dbtype db))
+        identifier-quoting (identifier-quoting-map dbtype)
         table (-> sheet :sheet :table)
         rows (:rows sheet)
         headers (->> rows
@@ -106,7 +116,7 @@
         (do
           (check-header-conflicts headers old-headers)
           (clear-table db table))
-        (create-table db escaped-headers table))
+        (create-table db escaped-headers table (= dbtype :mysql)))
       (write-rows db table escaped-headers data)
       (catch Exception e (throw-db-err target table e))))
   sheet)

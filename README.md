@@ -10,7 +10,7 @@ Let users manually insert data using Google Sheets while having the power of all
 
 googlesheets-sql-sync uses [JDBC](https://github.com/clojure/java.jdbc) and bundles the PostgreSQL and MySQL drivers.
 Additional drivers can be added any time.
-If you would like to add support for SQLite or any other SQL database, open an issue and it can probably be added in no time.
+If you also would like to have support for SQLite, open an issue and it can probably be added in no time.
 
 
 ## Assumptions and simplifications
