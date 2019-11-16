@@ -26,6 +26,7 @@
                                   :default  "https://www.googleapis.com/oauth2/v4/token"
                                   :validate [valid-url? "Must be a valid URL"]}
                :auth-only        {:desc     "Setup authentication, then quit, don't sync"}
+               :single-sync      {:desc     "Sync once only, then quit"}
                :no-server        {:desc     "Disable server, disables authentication and metrics"}
                :no-metrics       {:desc     "Disable metrics"}])
 

@@ -8,9 +8,20 @@
    [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.worker :as worker]))
 
+(defn stop
+  "Stops system. If system is not running, nothing happens."
+  [{:keys [timeout> work> stop-server]}]
+  (log/info "\nShutting down")
+  (when stop-server
+    (stop-server))
+  (when timeout>
+    (close! timeout>))
+  (when work>
+    (close! work>)))
+
 (defn start
   "Build a system from options, start it and return it."
-  [{:as options :keys [api-rate-limit auth-only no-metrics no-server]}]
+  [{:as options :keys [api-rate-limit auth-only no-metrics no-server single-sync]}]
   (try
     (let [ctx (assoc options
                      :work>     (chan)
@@ -23,31 +34,29 @@
                               (<! c))
                             (stop-server))))
         (cond-> ctx
-            true
-            (assoc :timeout>
-                   (interval/create-timeout> (:work> ctx) [:sync]))
+          (not single-sync)
+          (assoc :timeout>
+                 (interval/create-timeout> (:work> ctx) [:sync]))
 
-            (not (or no-server no-metrics))
-            (metrics/init)
+          single-sync
+          (assoc :timeout>
+                 (chan))
 
-            (not no-server)
-            (#(assoc % :stop-server (web/start %)))
+          (not (or no-server no-metrics))
+          (metrics/init)
 
-            true
-            (#(assoc % :worker> (worker/start %))))))
+          (not no-server)
+          (#(assoc % :stop-server (web/start %)))
+
+          true
+          (#(assoc % :worker> (worker/start %)))
+
+          single-sync
+          (#(do (go (<! (:timeout> %))
+                    (stop %))
+                %)))))
     (catch Exception e (do (log/error "Error while starting:" (.getMessage e))
                            :not-ok))))
-
-(defn stop
-  "Stops system. If system is not running, nothing happens."
-  [{:keys [timeout> work> stop-server]}]
-  (log/info "\nShutting down")
-  (when stop-server
-    (stop-server))
-  (when timeout>
-    (close! timeout>))
-  (when work>
-    (close! work>)))
 
 (defn trigger-sync
   "Tell system to sync, but doesn't wait for sync to complete."

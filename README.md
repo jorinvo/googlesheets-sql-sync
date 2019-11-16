@@ -87,6 +87,18 @@ Often you don't want to open up another port just for OAuth of a small sync tool
 To work around this you can run `java -jar googlesheets-sql-sync.jar --auth-only` on your local machine, then copy the generated `googlesheets_sql_sync.auth.json` file to your server and on the server run `java -jar googlesheets-sql-sync.jar --no-server`
 
 
+### Single Sync
+
+If you don't want to keep the syncing your data in an interval but want to sync only once,
+you can do so by passing the `single-sync` like this: `java -jar googlesheets-sql-sync.jar --single-sync`
+
+
+
+## Metrics
+
+By default a simple Prometheus counter `googlesheets_sql_sync_count` is provided at `/metrics`.
+
+
 ### Customization
 
 The program can be configured using command line flags. To see available options, run:

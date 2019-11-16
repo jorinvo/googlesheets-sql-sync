@@ -21,7 +21,7 @@
 
 (defn- do-sync
   "Authenticate, fetch data and update DB"
-  [{:keys [config-file no-server timeout> throttler user-oauth-url] :as ctx}]
+  [{:as ctx :keys [config-file no-server timeout> throttler user-oauth-url single-sync]}]
   (try
     (let [cfg (config/get config-file)]
       (try
@@ -38,7 +38,8 @@
               :not-ok)
             (show-init-message (:google_credentials cfg) user-oauth-url)))
         (catch Exception e (log/error (.getMessage e) "\nSync failed")))
-      (log/info "Next sync in" (interval/->string (:interval cfg)))
+      (when-not single-sync
+        (log/info "Next sync in" (interval/->string (:interval cfg))))
       (async/put! timeout> (:interval cfg)))
     (catch Exception e (do (log/error "Failed reading config file" (.getMessage e))
                            :not-ok))))
