@@ -1,6 +1,6 @@
 (ns googlesheets-sql-sync.interval
   (:require
-   [clojure.core.async :refer [<! >! chan close! sliding-buffer go pipeline-async timeout]]
+   [clojure.core.async :as a :refer [<! >! chan close! sliding-buffer go pipeline-async timeout]]
    [clojure.string :as string]))
 
 (defn ->ms [interval]

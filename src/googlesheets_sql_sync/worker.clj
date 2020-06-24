@@ -3,11 +3,13 @@
    [clojure.core.async :as async :refer [<! go go-loop]]
    [clojure.java.browse :refer [browse-url]]
    [googlesheets-sql-sync.config :as config]
+   [googlesheets-sql-sync.machine :as machine]
    [googlesheets-sql-sync.db :as db]
    [googlesheets-sql-sync.interval :as interval]
    [googlesheets-sql-sync.log :as log]
    [googlesheets-sql-sync.metrics :as metrics]
    [googlesheets-sql-sync.oauth :as oauth]
+   [googlesheets-sql-sync.auth-file :as auth-file]
    [googlesheets-sql-sync.sheets :as sheets]))
 
 (defn- show-init-message
@@ -20,6 +22,14 @@
       (browse-url url))))
 
 (defn- do-sync
+  "Authenticate, fetch data and update DB"
+  [ctx]
+  (machine/execute
+    {:get-config config/get
+     :get-auth-data auth-file/get}
+    ctx))
+
+(comment defn- do-sync
   "Authenticate, fetch data and update DB"
   [{:as ctx :keys [config-file no-server timeout> throttler user-oauth-url single-sync]}]
   (try
