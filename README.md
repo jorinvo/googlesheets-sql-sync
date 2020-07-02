@@ -62,7 +62,7 @@ java -jar googlesheets-sql-sync.jar --init
 2. Now fill out the missing information in the config file.
   1. Use your Google credentials from above.
   2. Specify at least one target and one sheet using that target.
-  3. You can find more DB options in the JDBC docs for [PostgreSQL](https://jdbc.postgresql.org/documentation/head/connect.html) or [MySQL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-configuration-properties.html).
+  3. You can find more DB options in the JDBC docs for [PostgreSQL](https://jdbc.postgresql.org/documentation/head/connect.html), [MySQL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-configuration-properties.html) or [SQLite](https://github.com/xerial/sqlite-jdbc#how-to-specify-database-files).
   4. Name the `table` as you wish for it to appear in your database.
   5. To get a `spreadsheet_id`, open one of [your Google Sheets](https://docs.google.com/spreadsheets) and copy the part between `/d/` and `/edit` from the URL bar in your Browser.
   6. Specify the `range` using the `A1:Z10`. Skip the number to select all rows - like `A:ZZ`. You can also specify a _sheet_ if your spreadsheet contains multiple sheets by prefixing th range like `SomeSheet!A:ZZ`.

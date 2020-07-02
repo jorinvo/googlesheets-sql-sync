@@ -7,6 +7,7 @@
 
 (def identifier-quoting-map
   {:postgresql "\""
+   :sqlite "\""
    :mysql "`"})
 
 (defn- escape
@@ -46,11 +47,10 @@
       (catch java.sql.SQLException _))))
 
 (comment
-  (let [db {:dbtype "postgresql"
-            :dbname "bi"
-            :host "localhost"
-            :user "bi"}]
-    (get-headers db "hi")))
+  (let [db {:connection-uri "jdbc:sqlite:testing-sqlite.db"}]
+    (jdbc/execute! db "create table a (a text, b text)"
+                {:identifiers identity
+                 :keywordize? false})))
 
 (defn- throw-db-err [target table e]
   (fail "There was a problem with table \"" table "\" on target \"" target "\": " (.getMessage e)))
@@ -79,7 +79,7 @@
 
 (defn- clear-table [db table]
   (log/info "Clearing table")
-  (jdbc/execute! db (str "truncate table " table)))
+  (jdbc/execute! db (str "delete from " table)))
 
 (defn- write-rows [db table headers rows]
   (log/info "Writing" (count rows) "rows to table")
@@ -97,8 +97,10 @@
 (defn update-table [config sheet]
   (let [target (-> sheet :sheet :target)
         db (get-db-config config target)
-        dbtype (keyword (:dbtype db))
-        identifier-quoting (identifier-quoting-map dbtype)
+        a (println (:connection-uri db))
+        dbtype (keyword (or (:dbtype db)
+                            (string/split (:connection-uri db) #":" 3)))
+        identifier-quoting (identifier-quoting-map :sqlite)
         table (-> sheet :sheet :table)
         rows (:rows sheet)
         headers (->> rows
