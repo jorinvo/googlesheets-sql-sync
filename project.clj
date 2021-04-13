@@ -10,7 +10,7 @@
                  [mysql/mysql-connector-java "8.0.18"]
                  [org.xerial/sqlite-jdbc "3.32.3"]
                  [org.clojure/tools.cli "0.3.7"]
-                 [http-kit "2.3.0"]
+                 [http-kit "2.5.3"]
                  [metosin/jsonista "0.2.0"]
                  [ring/ring-core "1.7.0-RC2"]
                  [spootnik/signal "0.2.1"]]
