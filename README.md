@@ -1,5 +1,7 @@
 # Google Sheets to SQL Sync
 
+**I don't recommend using this tool anymore these days. I found [airbyte](https://airbyte.com/) a well-maintained and feature-rich alternative.**
+
 [![Build Status](https://travis-ci.org/jorinvo/googlesheets-sql-sync.svg?branch=master)](https://travis-ci.org/jorinvo/googlesheets-sql-sync)
 [![cljdoc badge](https://cljdoc.org/badge/googlesheets-sql-sync/googlesheets-sql-sync)](https://cljdoc.org/d/googlesheets-sql-sync/googlesheets-sql-sync/CURRENT)
 [![Clojars Project](https://img.shields.io/clojars/v/googlesheets-sql-sync.svg)](https://clojars.org/googlesheets-sql-sync)
